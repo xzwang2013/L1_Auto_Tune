@@ -1,0 +1,17 @@
+{
+    "preEmphasis" : {
+        "range" : [-20, 20, 1]
+    },
+    "mainTap" : {
+        "range" : [-20, 20, 1]
+    },
+    "postEmphasis" : {
+        "range" : [-20, 20, 1]
+    },
+    "txCoarseSwing" : {
+        "range" : [0, 6, 1]
+    },
+    "ctle" : {
+        "range" : [0, 63, 1]
+    }
+}
