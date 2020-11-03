@@ -28,7 +28,7 @@ class L1Tune():
         self.mTuneConfDict = {}
         self.mTuneConfFileName = 'tranceiver_para_conf.json'
         self.mCurIndex = 0
-        self.mQuality = {}
+
         if (file_name != None and len(file_name) > 0):
             self.mTuneConfFileName = file_name
 
@@ -110,15 +110,9 @@ class L1Tune():
 
         self.__MoveCurValidKVNext()
 
-    def __QualityEval(self, **kwargs):
-        if 'snr' in kwargs.keys():
-            return kwargs['snr'] - self.mQuality['snr']
-        return 0
-
     # API
     def InitCaseBase(self, **kwargs):
         self.mCurIndex = 0
-        self.mQuality = kwargs['quality']
 
         for key in kwargs['conf'].keys():
             if (key in (self.mTuneConfDict.keys())):
@@ -131,12 +125,8 @@ class L1Tune():
         self.__CaseFeedback(0)        
 
     # API
-    def CaseFeedback(self, **kwargs):
-        offset = self.__QualityEval(**kwargs)
+    def CaseFeedback(self, offset):
         self.__CaseFeedback(offset)
-
-        if offset > 0:
-            self.mQuality = kwargs
 
     # API
     def GetNextCase(self):
@@ -166,9 +156,6 @@ Transceiver_Base_Default = {
         'txCoarseSwing': 4,
         'ctle' : 4
     },
-    'quality': {
-        'snr' : 22
-    }
 }
 
 if __name__ == "__main__":
@@ -180,10 +167,10 @@ if __name__ == "__main__":
     l1_tone.InitCaseBase(**Transceiver_Base_Default)
     pp.pprint(Transceiver_Base_Default)
 
-    feedback_msr = [22, 23, 24, 23, 24, 23, 24, 25, 24, 23, 23, 26, 25, 26, 25, 27, 28, 29, 28, 28]
+    offset_list = [0, 1, 1, -1, 1, -1, 1, 1, -1, 1, 0, 1, -1, 1, -1, 1, 1, 1, -1, 0]
     i = 0
 
-    for msr_fb in feedback_msr:
+    for offset in offset_list:
         i = i + 1
         print("%d:" %(i))
         case = l1_tone.GetNextCase()
@@ -192,11 +179,10 @@ if __name__ == "__main__":
             break
 
         print("quality_cur: ", end="")
-        pp.pprint(l1_tone.mQuality)
         print("quality_fb: ", end="")
-        pp.pprint({'snr' : msr_fb})
+        pp.pprint({'offset' : offset})
         # run testing ...
-        l1_tone.CaseFeedback(snr = msr_fb)
+        l1_tone.CaseFeedback(offset)
 
     tune_result = l1_tone.GetCaseTuned()
     print("\nTuned Result:")
