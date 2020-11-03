@@ -3,20 +3,8 @@ import os
 import json
 import pprint
 
-class L1Tune():
-    '''
-    mTuneConfDict = {
-        "Transceiver_key" : {
-            # from config file
-            "range" : { ... },
-            # dynamic add
-            "base" : { ... },
-            "cur" : { ... },
-            "final" : { ... }
-        },    
-        ...
-    }
-    '''
+class L1Search():
+    
     class RangeIndexDef:
         begin = 0
         end = 1
@@ -38,7 +26,7 @@ class L1Tune():
         path = os.path.dirname(os.path.abspath(__file__))
         
         with open(os.path.normpath(os.path.join(path, self.mTuneConfFileName)), 'r') as fid:
-            self.mTuneConfDict = json.load(fid)['Tune']
+            self.mSearchConfDict = json.load(fid)['Search']
 
     def GetCaseTotalMax(self):
         result = 1
