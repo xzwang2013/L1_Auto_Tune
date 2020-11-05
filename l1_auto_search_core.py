@@ -55,7 +55,7 @@ class L1Search():
     def GetCaseTotalMax(self):
         result = 1
         for value in self.mSearchConfDict.values():
-            result *= len(value)
+            result *= len(value['range'])
 
         return result
 

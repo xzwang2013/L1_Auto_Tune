@@ -9,7 +9,7 @@ class StcPython(object):
 
     def __init__(self):
         self.stcInt = None
-        if sys.hexversion < 0x020605F0 or sys.hexversion > 0x030608F0 \
+        if sys.hexversion < 0x020605F0 or sys.hexversion > 0x030908F0 \
         or (sys.hexversion > 0x030404F0 and sys.hexversion < 0x030509F0):
              raise ImportError('This version of STC requires Python version 2.6.5 upto 3.6.9 \
 excluding 3.5 variants')
@@ -21,7 +21,7 @@ excluding 3.5 variants')
         #   /home/user/Spirent_TestCenter_4.40/Spirent_TestCenter_Application_Linux
         if 'STC_PRIVATE_INSTALL_DIR' not in os.environ:
             try:
-                os.environ['STC_PRIVATE_INSTALL_DIR'] = STC_PRIVATE_INSTALL_DIR
+                os.environ['STC_PRIVATE_INSTALL_DIR'] = "C:/Program Files/Spirent Communications/Spirent TestCenter 9.90/Spirent TestCenter Application"
             except:
                 raise Exception('Please replace STC_PRIVATE_INSTALL_DIR with '
                                 'the actual STC install directory, or set the '
