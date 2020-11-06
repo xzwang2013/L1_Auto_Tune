@@ -3,8 +3,8 @@ import json
 from StcPython import StcPython
 stc = StcPython()
 
-port1_location="//10.109.66.170/1/1"
-port2_location="//10.109.66.170/1/2"
+port1_location = "//neb-nickluong-01.calenglab.spirentcom.com/1/17"
+port2_location = "//neb-nickluong-01.calenglab.spirentcom.com/1/25"
 
 print("reserving ports")
 ret = stc.perform("createandreserveports", locationlist=[port1_location, port2_location])
@@ -21,7 +21,7 @@ stc.config("%s.l1configgroup.l1portprbs.l1laneprbspam4(1)" % hport1, TxPattern="
 
 stc.apply()
 
-
+stc.perform("startenhancedresultstestcommand")
 
 
 query_json = {
@@ -81,6 +81,6 @@ expect_json = {
 }
 
 ret = stc.perform("spirent.results.VerifyEnhancedResultsValueCommand", ResultQueryJson=json.dumps(query_json), ExpectedResultJson=json.dumps(expect_json))
-print ret["PassFailState"]
+print (ret["PassFailState"])
 
 

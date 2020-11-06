@@ -13,10 +13,47 @@ stc = StcPython()
 print("Done")
 
 #########################################################################################
-port1_location = "//neb-nickluong-01.calenglab.spirentcom.com/1/1"
-port2_location = "//neb-nickluong-01.calenglab.spirentcom.com/1/9"
+
+port1_location = "//neb-nickluong-01.calenglab.spirentcom.com/1/17"
+#port2_location = "//neb-nickluong-01.calenglab.spirentcom.com/1/9"
 pg_rx_mode = "DAC"
+
 #########################################################################################
+
+DEFAULT_TIMESERIES_RETENTION_MINS = '360'  # 6 HOURS
+def config_result_profile(stc, ts_retention_mins=None):
+    """
+    Configure the STC LabServer session orion-res result profile.
+
+    Setting the result profile is required to store results in the orion-res database.
+
+    :param obj stc: Instance of an STC LabServer session.
+    :param int ts_retention_mins:  Number of minutes to retain orion-res data for.
+    :return: None
+    :raises Exception: resultdimensionproviderregistry should already exist.
+    """
+
+    sel_profile = None
+    provider_reg = None
+    for child in stc.get('system1', 'children').split():
+        if "spirent.results.enhancedresultsselectorprofile" in child:
+            sel_profile = child
+        elif "spirent.results.resultdimensionproviderregistry" in child:
+            provider_reg = child
+
+    if not provider_reg:
+        raise Exception("resultdimensionproviderregistry should already exist")
+
+    if not sel_profile:
+        sel_profile = stc.create("spirent.results.enhancedresultsselectorprofile", under="system1")
+
+    if ts_retention_mins is None:
+        ts_retention_mins = DEFAULT_TIMESERIES_RETENTION_MINS
+
+    stc.config(sel_profile, SubscribeType='ALL',
+               EnableLiveDataRetention=True,
+               LiveDataRetentionInterval=ts_retention_mins)
+
 def ConfigToDevice(**kwargs):
     print("   Configuring ... ", end="", flush=True)
     for k, v in kwargs.items():
@@ -32,13 +69,16 @@ def CheckResult():
     return False
 
 #########################################################################################
+
 print("Reserving ports")
 ret = stc.perform("createandreserveports", locationlist=[port1_location])
 
 hportlist = ret["PortList"].split()
 hport1 = hportlist[0]
 #hport2 = hportlist[1]
-print("Reserved ports: %s, %s" %(hport1))
+print("Reserved ports: %s, location: %s" %(hport1, port1_location))
+
+config_result_profile(stc, None)
 
 # Check L1 Mode
 if stc.get("%s.l1configgroup" % hport1) == None:
@@ -68,7 +108,12 @@ while i <= lane_count_port1:
     i += 1
 
 stc.apply()
+stc.perform("startenhancedresultstestcommand")
 print("Done")
+
+# Get IQ DBID
+resultDbId = stc.get("project1.testinfo", "resultdbid")
+print("DBID = %s" %(resultDbId))
 
 print("Create L1Search")
 l1_search = L1Search(None, "DAC")
