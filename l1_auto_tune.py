@@ -6,7 +6,7 @@ import requests
 from StcPython import StcPython
 
 # This loads the AN/LT Transceiver Tune library.
-from l1_tune_alg import L1Tune, L1ToneRough
+from l1_tune_alg import L1Tune, L1TuneRough
 
 print("Loading TestCenter library ... ", end="", flush=True)
 stc = StcPython()
@@ -15,8 +15,8 @@ print("Done")
 #########################################################################################
 
 # port1_location is to tune
-g_port1_location = "//neb-nickluong-01.calenglab.spirentcom.com/1/33"
-g_port2_location = "//neb-nickluong-01.calenglab.spirentcom.com/1/41"
+g_port1_location = "//neb-nickluong-01.calenglab.spirentcom.com/1/17"
+g_port2_location = "//neb-nickluong-01.calenglab.spirentcom.com/1/25"
 g_pg_rx_mode = "DAC"
 g_resultdbid = ""
 g_iqserviceurl = ""
@@ -25,8 +25,8 @@ g_hport1 = None
 g_hport2 = None
 g_lane_count = 0
 
-g_tone_rough_final = {}
-g_tone_final = {}
+g_tune_rough_final = {}
+g_tune_final = {}
 #########################################################################################
 
 DEFAULT_TIMESERIES_RETENTION_MINS = '360'  # 6 HOURS
@@ -78,7 +78,7 @@ def ConfigToDevice(**kwargs):
     stc.apply()
     print(" Done")
 
-def GetValueInResult(collumn_name, **kwargs):
+def GetValueInResult(collumn_name, row_index = 0, **kwargs):
     i = 0
     found = False
 
@@ -91,7 +91,7 @@ def GetValueInResult(collumn_name, **kwargs):
             continue
 
     if found == True:
-        return kwargs['rows'][0][i]
+        return kwargs['rows'][row_index][i]
     
     return None
     
@@ -169,7 +169,7 @@ def VerifyLinkStatusUp():
     counter = 0
     while counter < 4:
       ret = GetLinkStatusResult()
-      link_status = GetValueInResult("link_status", **ret)
+      link_status = GetValueInResult("link_status", 0, **ret)
       if link_status != None :
           if link_status == "UP":
               return True
@@ -329,11 +329,12 @@ def CheckLineQualityForTuneRough():
     global g_lane_count
 
     time.sleep(10)
-    stc.perform("L1PcsClearCommand", portlist = g_hport1)
-    stc.perform("L1PcsClearHistoryCommand", portlist = g_hport1)
+    #stc.perform("L1PcsClearCommand", portlist = g_hport1)
+    #stc.perform("L1PcsClearHistoryCommand", portlist = g_hport1)
+    stc.perform("ResultsClearAllCommand")
     time.sleep(20)
     ret = GetPortPcsResult()
-    ret = GetValueInResult("uncorrected_cw_total", **ret)
+    ret = GetValueInResult("uncorrected_cw_total", 0, **ret)
     if ret != None:
         uncorrect_cw = int(ret)
         print("uncorrect_cw = %d" %uncorrect_cw)
@@ -342,9 +343,44 @@ def CheckLineQualityForTuneRough():
     print("Can't get uncorrect_cw")
     return False
 
+g_line_quality = 0
+def GetSymbolErrorsPerSec(port):
+    time.sleep(10)
+    #stc.perform("L1PcsClearCommand", portlist = port)
+    stc.perform("ResultsClearAllCommand")
+    time.sleep(20)
+
+    ret = GetPortPcsResult()
+    ret = GetValueInResult("symbol_errors_per_sec", 1, **ret)
+    if ret != None:
+        ret = int(ret)
+
+    return ret
+
+def CheckLineQualityForTune():
+    global g_hport1
+    global g_hport2
+    global g_lane_count
+    global g_line_quality
+
+    line_quality = GetSymbolErrorsPerSec(g_hport2)
+    offset = abs(line_quality - g_line_quality)
+    if offset < int(g_line_quality * 0.1):
+        # Deem as jitter
+        line_quality = g_line_quality
+
+    print("Cur Line QT: %d, Min Line QT: %d" %(line_quality, g_line_quality))
+    if line_quality < g_line_quality:
+        g_line_quality = line_quality
+        return 1
+    elif line_quality > g_line_quality:
+        return -1
+    
+    return 0
+
 #########################################################################################
 
-def SetupTuneEnv(port1, port2, rxmode):
+def SetupTuneEnv(**kwargs):
     global g_port1_location
     global g_port2_location
     global g_pg_rx_mode
@@ -354,16 +390,21 @@ def SetupTuneEnv(port1, port2, rxmode):
     global g_hport2
     global g_lane_count
 
-    g_port1_location = port1
-    g_port2_location = port2
-    g_pg_rx_mode = rxmode
-    locationlist = []
-    
+    if 'port1' in kwargs.keys():
+        g_port1_location = kwargs['port1']
+
+    if 'port2' in kwargs.keys():
+        g_port2_location = kwargs['port2']
+
+    if 'rxmode' in kwargs.keys():
+        g_pg_rx_mode = kwargs['rxmode']
+
     print("Reserving ports")
     if (g_port1_location == None):
         print("port1 can't be None, exit.")
         exit
 
+    locationlist = []
     locationlist.append(g_port1_location)
     if g_port2_location != None:
         locationlist.append(g_port2_location)
@@ -430,17 +471,16 @@ def SetupTuneEnv(port1, port2, rxmode):
 
 def DoTuneRough():
     global g_pg_rx_mode
-    global g_tone_rough_final
+    global g_tune_rough_final
 
-    print("Create L1ToneRough")
-    l1_tone_rough = L1ToneRough(None, g_pg_rx_mode)
-    case_total = l1_tone_rough.GetCaseTotalMax()
-    print("Case max = %d" %(case_total))
+    l1_tune_rough = L1TuneRough(None, g_pg_rx_mode)
+    case_total = l1_tune_rough.GetCaseTotalMax()
+    print("Tune Rough Case Max: %d" %(case_total))
 
-    print("Begin search ...")
+    print("Begin Tune Rough ...")
     counter = 0
     while True:
-        config_para = l1_tone_rough.GetNextCase()
+        config_para = l1_tune_rough.GetNextCase()
         if config_para == None:
             print("Tune Rough finished. Fail")
             break
@@ -460,14 +500,63 @@ def DoTuneRough():
         if result == True:
             print("Search finished. Success")
             break
-
+        
+        snapshot_name = "L1_Tune_Result_%d_%d_%d_%d_%d" % (config_para['preEmphasis'], config_para['mainTap'], config_para['postEmphasis'], config_para['txCoarseSwing'], config_para['ctle'])
+        stc.perform("SaveEnhancedResultsSnapshotCommand", SnapshotName = snapshot_name)
         counter += 1
 
-    g_tone_rough_final = config_para
+    g_tune_rough_final = config_para.copy()
     return config_para
 
+def DoTune():
+    global g_hport2
+    global g_tune_rough_final
+    global g_tune_final
+    global g_line_quality
+    
+    g_line_quality = GetSymbolErrorsPerSec(g_hport2)
+    print("Min Line QT: %d" %g_line_quality)
+    l1_tune = L1Tune(None)
+    case_total = l1_tune.GetCaseTotalMax()
+    print("Tone Case Max = %d" %(case_total))
+
+    l1_tune.InitCaseBase(**{'conf':g_tune_rough_final})
+
+    print("Begin Tone ...")
+    counter = 0
+    while True:
+        config_para = l1_tune.GetNextCase()
+        if config_para['result'] == False:
+            print("Finished")
+            break
+        print("%3d : " %(counter), end="")
+        print(config_para['case'], end="")
+
+        ConfigToDevice(**config_para['case'])
+
+        result = VerifyLinkStatusUp()
+        if result == False:
+            print("Link Down. Finished")
+            l1_tune.CaseFeedback(-1)
+            counter += 1
+            continue
+
+        result = CheckLineQualityForTune()
+        l1_tune.CaseFeedback(result)
+
+        snapshot_name = "L1_Tune_Result_%d_%d_%d_%d_%d" % (config_para['preEmphasis'], config_para['mainTap'], config_para['postEmphasis'], config_para['txCoarseSwing'], config_para['ctle'])
+        stc.perform("SaveEnhancedResultsSnapshotCommand", SnapshotName = snapshot_name)
+        counter += 1
+
+    g_tune_rough_final = l1_tune.GetFinalResult().copy()
+    return g_tune_rough_final
+
 if __name__ == "__main__":
-    SetupTuneEnv(g_port1_location, g_port2_location, "DAC")
-    g_tone_rough_final = DoTuneRough()
-    print("Final Result: ", end="")
-    print(g_tone_rough_final)
+    SetupTuneEnv(port1 = g_port1_location, port2 = g_port2_location, rxmode = "DAC")
+    g_tune_rough_final = DoTuneRough()
+    print("Tune Rough Result: ", end="")
+    print(g_tune_rough_final)
+
+    g_tune_final = DoTune()
+    print("Tune Result: ", end="")
+    print(g_tune_final)

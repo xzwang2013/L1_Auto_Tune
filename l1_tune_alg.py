@@ -139,11 +139,15 @@ class L1Tune():
             ret['case'] = self.mCurConf.copy()
             ret['case'][k] = self.mTuneConfDict[k]['cur']
 
-        print("L1Tune - GetNextCase:")
-        pp.pprint(ret)
+        #print("L1Tune - GetNextCase:")
+        #pp.pprint(ret)
 
         return ret   
 
+    # API
+    def GetFinalResult(self):
+        return self.mCurConf
+        
 #########################################################################################
 
 Transceiver_Base_Default = {
@@ -156,7 +160,7 @@ Transceiver_Base_Default = {
     },
 }
 
-class L1ToneRough():
+class L1TuneRough():
     
     class RangeIndexDef:
         begin = 0
@@ -244,16 +248,17 @@ class L1ToneRough():
 
         return ret
 
-# Test Auto Tone Rough
+'''
+# Test Auto Tune Rough
 if __name__ == "__main__":
     pp = pprint.PrettyPrinter(indent=2)
 
-    l1_tone_rough = L1ToneRough(None, "DAC")
+    l1_tune_rough = L1TuneRough(None, "DAC")
     
-    case_total = l1_tone_rough.GetCaseTotalMax()
+    case_total = l1_tune_rough.GetCaseTotalMax()
     count = 0
     while True:
-        config = l1_tone_rough.GetNextCase()
+        config = l1_tune_rough.GetNextCase()
         if config == None:
             break
         print("%3d: " %(count), end="")
@@ -261,16 +266,16 @@ if __name__ == "__main__":
         count += 1
 
     sys.exit(0)
-
 '''
+
 # Test Auto Tone
 if __name__ == "__main__":
     pp = pprint.PrettyPrinter(indent=2)
 
-    l1_tone = L1Tune(None)
-    l1_tone.mDebug = True
-    case_total = l1_tone.GetCaseTotalMax()
-    l1_tone.InitCaseBase(**Transceiver_Base_Default)
+    l1_tune = L1Tune(None)
+    l1_tune.mDebug = True
+    case_total = l1_tune.GetCaseTotalMax()
+    l1_tune.InitCaseBase(**Transceiver_Base_Default)
     pp.pprint(Transceiver_Base_Default)
 
     offset_list = [0, 1, 1, -1, 1, -1, 1, 1, -1, 1, 0, 1, -1, 1, -1, 1, 1, 1, -1, 0]
@@ -279,7 +284,7 @@ if __name__ == "__main__":
     for offset in offset_list:
         i = i + 1
         print("%d:" %(i))
-        case = l1_tone.GetNextCase()
+        case = l1_tune.GetNextCase()
         if case['result'] == False:
             print("Finished")
             break
@@ -288,10 +293,9 @@ if __name__ == "__main__":
         print("quality_fb: ", end="")
         pp.pprint({'offset' : offset})
         # run testing ...
-        l1_tone.CaseFeedback(offset)
+        l1_tune.CaseFeedback(offset)
 
-    tune_result = l1_tone.GetCaseTuned()
+    tune_result = case
     print("\nTuned Result:")
     pp.pprint(tune_result)
     sys.exit(0)
-    '''
