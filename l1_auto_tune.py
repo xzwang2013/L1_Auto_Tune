@@ -498,10 +498,10 @@ def DoTuneRough():
 
         result = CheckLineQualityForTuneRough()
         if result == True:
-            print("Search finished. Success")
+            print("Tune Rough finished. Success")
             break
         
-        snapshot_name = "L1_Tune_Result_%d_%d_%d_%d_%d" % (config_para['preEmphasis'], config_para['mainTap'], config_para['postEmphasis'], config_para['txCoarseSwing'], config_para['ctle'])
+        snapshot_name = "L1_Tune_Result_%d_%d_%d_%d_%d" % (config_para['case']['preEmphasis'], config_para['case']['mainTap'], config_para['case']['postEmphasis'], config_para['case']['txCoarseSwing'], config_para['case']['ctle'])
         stc.perform("SaveEnhancedResultsSnapshotCommand", SnapshotName = snapshot_name)
         counter += 1
 
@@ -536,7 +536,7 @@ def DoTune():
 
         result = VerifyLinkStatusUp()
         if result == False:
-            print("Link Down. Finished")
+            print("Link Down")
             l1_tune.CaseFeedback(-1)
             counter += 1
             continue
@@ -544,7 +544,7 @@ def DoTune():
         result = CheckLineQualityForTune()
         l1_tune.CaseFeedback(result)
 
-        snapshot_name = "L1_Tune_Result_%d_%d_%d_%d_%d" % (config_para['preEmphasis'], config_para['mainTap'], config_para['postEmphasis'], config_para['txCoarseSwing'], config_para['ctle'])
+        snapshot_name = "L1_Tune_Result_%d_%d_%d_%d_%d" % (config_para['case']['preEmphasis'], config_para['case']['mainTap'], config_para['case']['postEmphasis'], config_para['case']['txCoarseSwing'], config_para['case']['ctle'])
         stc.perform("SaveEnhancedResultsSnapshotCommand", SnapshotName = snapshot_name)
         counter += 1
 
