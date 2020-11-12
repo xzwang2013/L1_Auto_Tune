@@ -6,7 +6,7 @@ import requests
 from StcPython import StcPython
 
 # This loads the AN/LT Transceiver Tune library.
-from l1_auto_tune_core import L1Tune, L1Search
+from l1_tune_alg import L1Tune, L1ToneRough
 
 print("Loading TestCenter library ... ", end="", flush=True)
 stc = StcPython()
@@ -15,10 +15,18 @@ print("Done")
 #########################################################################################
 
 # port1_location is to tune
-port1_location = "//neb-nickluong-01.calenglab.spirentcom.com/1/49"
-port2_location = "//neb-nickluong-01.calenglab.spirentcom.com/1/57"
-pg_rx_mode = "DAC"
+g_port1_location = "//neb-nickluong-01.calenglab.spirentcom.com/1/33"
+g_port2_location = "//neb-nickluong-01.calenglab.spirentcom.com/1/41"
+g_pg_rx_mode = "DAC"
+g_resultdbid = ""
+g_iqserviceurl = ""
 
+g_hport1 = None
+g_hport2 = None
+g_lane_count = 0
+
+g_tone_rough_final = {}
+g_tone_final = {}
 #########################################################################################
 
 DEFAULT_TIMESERIES_RETENTION_MINS = '360'  # 6 HOURS
@@ -56,12 +64,16 @@ def config_result_profile(stc, ts_retention_mins=None):
                LiveDataRetentionInterval=ts_retention_mins)
 
 def ConfigToDevice(**kwargs):
+    global g_hport1
+    global g_hport2
+    global g_lane_count
+
     print("   Configuring ... ", end="", flush=True)
     for k, v in kwargs.items():
         i = 1
-        while i <= lane_count_port1: 
-            stc.config("%s.l1configgroup.l1porttxcvrs.l1Lanetxcvrspam4(%d)" %(hport1, i), **{k : str(v)})
-            #stc.config("%s.l1configgroup.l1porttxcvrs.l1Lanetxcvrspam4(%d)" %(hport2, i), **{k : str(v)})
+        while i <= g_lane_count: 
+            stc.config("%s.l1configgroup.l1porttxcvrs.l1Lanetxcvrspam4(%d)" %(g_hport1, i), **{k : str(v)})
+            #stc.config("%s.l1configgroup.l1porttxcvrs.l1Lanetxcvrspam4(%d)" %(g_hport2, i), **{k : str(v)})
             i += 1
     stc.apply()
     print(" Done")
@@ -85,6 +97,7 @@ def GetValueInResult(collumn_name, **kwargs):
     
 
 #########################################################################################
+
 query_l1_port_result_json = {
     "multi_result": {
       "filters": [],
@@ -135,13 +148,16 @@ query_l1_port_result_json = {
 }
 
 def GetLinkStatusResult():
+    global g_resultdbid
+    global g_iqserviceurl
+
     data = {
-        "database": {"id": resultDbId},
+        "database": {"id": g_resultdbid},
         "mode": "once",
         "definition":query_l1_port_result_json
     }
     
-    ret = requests.post(url=r'http://localhost:9200/queries',json = data)
+    ret = requests.post(url=g_iqserviceurl+'/queries',json = data)
     ret_dict=ret.json()
     ret_dict=ret_dict['result']
     
@@ -155,7 +171,7 @@ def VerifyLinkStatusUp():
       ret = GetLinkStatusResult()
       link_status = GetValueInResult("link_status", **ret)
       if link_status != None :
-          if link_status == "Up":
+          if link_status == "UP":
               return True
       time.sleep(5)
       counter += 1     
@@ -288,25 +304,33 @@ query_l1_port_pcs_result_json = {
 }
 
 def GetPortPcsResult():
+    global g_resultdbid
+    global g_iqserviceurl
+
     #results = ""
     #ret = stc.perform("spirent.results.QueryEnhancedResultsValueCommand", ResultQueryJson=json.dumps(query_l1_lane_pcs_result_json), Results=results)
     data = {
-        "database": {"id": resultDbId},
+        "database": {"id": g_resultdbid},
         "mode": "once",
         "definition":query_l1_port_pcs_result_json
     }
     
-    ret = requests.post(url=r'http://localhost:9200/queries',json = data)
+    ret = requests.post(url=g_iqserviceurl+'/queries', json = data)
     ret_dict=ret.json()
     ret_dict=ret_dict['result']
     
     return ret_dict
 
 #########################################################################################
-def CheckLineQualityForSearch():
+
+def CheckLineQualityForTuneRough():
+    global g_hport1
+    global g_hport2
+    global g_lane_count
+
     time.sleep(10)
-    stc.perform("L1PcsClearCommand", portlist = hport1)
-    stc.perform("L1PcsClearHistoryCommand", portlist = hport1)
+    stc.perform("L1PcsClearCommand", portlist = g_hport1)
+    stc.perform("L1PcsClearHistoryCommand", portlist = g_hport1)
     time.sleep(20)
     ret = GetPortPcsResult()
     ret = GetValueInResult("uncorrected_cw_total", **ret)
@@ -320,79 +344,130 @@ def CheckLineQualityForSearch():
 
 #########################################################################################
 
-print("Reserving ports")
-ret = stc.perform("createandreserveports", locationlist=[port1_location, port2_location])
+def SetupTuneEnv(port1, port2, rxmode):
+    global g_port1_location
+    global g_port2_location
+    global g_pg_rx_mode
+    global g_resultdbid
+    global g_iqserviceurl
+    global g_hport1
+    global g_hport2
+    global g_lane_count
 
-hportlist = ret["PortList"].split()
-hport1 = hportlist[0]
-hport2 = hportlist[1]
-print("Reserved ports: %s, location: %s" %(hport1, port1_location))
-print("Reserved ports: %s, location: %s" %(hport2, port2_location))
-
-config_result_profile(stc, None)
-
-# Check L1 Mode
-if stc.get("%s.l1configgroup" % hport1) == None:
-    print("Not in L1 mode, exit.")
-    exit
-
-print("Get lane_count")
-lane_count_port1 = int(stc.get("%s.l1configgroup.l1porttxcvrs" % hport1, "lanecount"))
-'''
-lane_count_port2 = int(stc.get("%s.l1configgroup.l1porttxcvrs" % hport2, "lanecount"))
-if lane_count_port1 != lane_count_port2:
-    print("Lane_count of two ports not equal, exit.")
-    exit
-'''    
-print("lane_count = %d" %(lane_count_port1))
-
-print("Disable AN, set rxmode to %s, set all lane to None ... " %(pg_rx_mode), end="", flush=True)
-stc.config("%s.l1configgroup.l1portpcs" %hport1, AutoNegotiationEnabled="False")
-stc.config("%s.l1configgroup.l1portpcs" %hport2, AutoNegotiationEnabled="False")
-
-'''
-i = 1
-while i <= lane_count_port1: 
-    stc.config("%s.l1configgroup.l1portprbs.l1laneprbspam4(%d)" %(hport1, i), TxPattern = "None")
-    #stc.config("%s.l1configgroup.l1portprbs.l1laneprbspam4(%d)" %(hport2, i), TxPattern = "PRBS7")
-    stc.config("%s.l1configgroup.L1PortTxcvrs.l1lanetxcvrspam4(%d)" %(hport1, i), RxMode = pg_rx_mode)
-    #stc.config("%s.l1configgroup.L1PortTxcvrs.l1lanetxcvrspam4(%d)" %(hport2, i), RxMode = pg_rx_mode)
-    i += 1
-'''
-
-stc.apply()
-stc.perform("startenhancedresultstestcommand")
-print("Done")
-
-# Get IQ DBID
-resultDbId = stc.get("project1.testinfo", "resultdbid")
-print("DBID = %s" %(resultDbId))
-
-print("Create L1Search")
-l1_search = L1Search(None, "DAC")
-case_total = l1_search.GetCaseTotalMax()
-print("Case max = %d" %(case_total))
-
-print("Begin search ...")
-counter = 0
-while True:
-    config_para = l1_search.GetNextCase()
-    if config_para == None:
-        print("Search finished. Fail")
-        break
-    print("%3d : " %(counter), end="")
-    print(config_para, end="")
-
-    ConfigToDevice(**config_para)
-
-    result = VerifyLinkStatusUp()
-    if result == False:
-        counter += 1
-        continue
+    g_port1_location = port1
+    g_port2_location = port2
+    g_pg_rx_mode = rxmode
+    locationlist = []
     
-    result = CheckLineQualityForSearch()
-    if result == True:
-        print("Search finished. Success")
-        break
+    print("Reserving ports")
+    if (g_port1_location == None):
+        print("port1 can't be None, exit.")
+        exit
 
-    counter += 1
+    locationlist.append(g_port1_location)
+    if g_port2_location != None:
+        locationlist.append(g_port2_location)
+    else:
+        g_hport2 = None
+
+    ret = stc.perform("createandreserveports", locationlist = locationlist)
+
+    hportlist = ret["PortList"].split()
+    g_hport1 = hportlist[0]
+    if g_port2_location != None:
+        g_hport2 = hportlist[1]
+    print("Reserved ports: %s, location: %s" %(g_hport1, g_port1_location))
+    if g_port2_location != None:
+        print("Reserved ports: %s, location: %s" %(g_hport2, g_port2_location))
+
+    config_result_profile(stc, None)
+
+    # Check L1 Mode
+    if stc.get("%s.l1configgroup" % g_hport1) == None:
+        print("%s Not in L1 mode, exit." %g_port1_location)
+        exit
+    if g_hport2 != None:
+        if stc.get("%s.l1configgroup" % g_hport2) == None:
+            print("%s Not in L1 mode, exit."  %g_port2_location)
+            exit
+
+    print("Get lane_count")
+    g_lane_count = int(stc.get("%s.l1configgroup.l1porttxcvrs" % g_hport1, "lanecount"))
+    if g_hport2 != None:
+        lane_count_port2 = int(stc.get("%s.l1configgroup.l1porttxcvrs" % g_hport2, "lanecount"))
+        if g_lane_count != lane_count_port2:
+            print("Lane_count of two ports not equal(%d, %d), exit." %(g_lane_count, lane_count_port2))
+            exit
+
+    print("lane_count: %d" %(g_lane_count))
+
+    print("Disable AN, set rxmode to %s, set all lane to None ... " %(g_pg_rx_mode), end="", flush=True)
+    stc.config("%s.l1configgroup.l1portpcs" %g_hport1, AutoNegotiationEnabled="False")
+    stc.config("%s.l1configgroup.l1portpcs" %g_hport2, AutoNegotiationEnabled="False")
+
+    i = 1
+    while i <= g_lane_count: 
+        stc.config("%s.l1configgroup.l1portprbs.l1laneprbspam4(%d)" %(g_hport1, i), TxPattern = "None")
+        if g_hport2 != None:
+            stc.config("%s.l1configgroup.l1portprbs.l1laneprbspam4(%d)" %(g_hport2, i), TxPattern = "None")
+        stc.config("%s.l1configgroup.L1PortTxcvrs.l1lanetxcvrspam4(%d)" %(g_hport1, i), RxMode = g_pg_rx_mode)
+        if g_hport2 != None:
+            stc.config("%s.l1configgroup.L1PortTxcvrs.l1lanetxcvrspam4(%d)" %(g_hport2, i), RxMode = g_pg_rx_mode)
+        i += 1
+
+    stc.apply()
+    stc.perform("startenhancedresultstestcommand")
+    print("Done")
+
+    # Get IQ ServiceURL
+    g_iqserviceurl = stc.get("system1.temevaresultsconfig", "serviceurl")
+    print("IQServiceURL: %s" %(g_iqserviceurl))
+
+    # Get IQ DBID
+    g_resultdbid = stc.get("project1.testinfo", "resultdbid")
+    print("DBID: %s" %(g_resultdbid))
+
+
+def DoTuneRough():
+    global g_pg_rx_mode
+    global g_tone_rough_final
+
+    print("Create L1ToneRough")
+    l1_tone_rough = L1ToneRough(None, g_pg_rx_mode)
+    case_total = l1_tone_rough.GetCaseTotalMax()
+    print("Case max = %d" %(case_total))
+
+    print("Begin search ...")
+    counter = 0
+    while True:
+        config_para = l1_tone_rough.GetNextCase()
+        if config_para == None:
+            print("Tune Rough finished. Fail")
+            break
+        print("%3d : " %(counter), end="")
+        print(config_para, end="")
+
+        ConfigToDevice(**config_para)
+
+        result = VerifyLinkStatusUp()
+        if result == False:
+            counter += 1
+            continue
+        
+        print("Link UP")
+
+        result = CheckLineQualityForTuneRough()
+        if result == True:
+            print("Search finished. Success")
+            break
+
+        counter += 1
+
+    g_tone_rough_final = config_para
+    return config_para
+
+if __name__ == "__main__":
+    SetupTuneEnv(g_port1_location, g_port2_location, "DAC")
+    g_tone_rough_final = DoTuneRough()
+    print("Final Result: ", end="")
+    print(g_tone_rough_final)

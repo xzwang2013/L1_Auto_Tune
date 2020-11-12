@@ -17,7 +17,7 @@
         }
     },
 
-    "Search" : {
+    "TuneRough" : {
         "DAC" : {
             "preEmphasis" : {
                 "range" : [-6, 0, 2]

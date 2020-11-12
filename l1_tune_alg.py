@@ -144,9 +144,7 @@ class L1Tune():
 
         return ret   
 
-     # API
-    def GetCaseTuned(self):
-        return self.mCurConf
+#########################################################################################
 
 Transceiver_Base_Default = {
     'conf' : {
@@ -158,7 +156,7 @@ Transceiver_Base_Default = {
     },
 }
 
-class L1Search():
+class L1ToneRough():
     
     class RangeIndexDef:
         begin = 0
@@ -169,7 +167,7 @@ class L1Search():
         self.mFinshed = False
         self.mCurConf = {}
         self.mSearchConfDict = {}
-        self.mSearchConfFileName = 'tranceiver_para_conf.json'
+        self.mSearchConfFileName = './tranceiver_para_conf.json'
         self.mInterface = interface
         self.mQuality = {}
         if (file_name != None and len(file_name) > 0):
@@ -181,7 +179,7 @@ class L1Search():
         path = os.path.dirname(os.path.abspath(__file__))
         
         with open(os.path.normpath(os.path.join(path, self.mSearchConfFileName)), 'r') as fid:
-            configDict = json.load(fid)['Search'][self.mInterface]
+            configDict = json.load(fid)['TuneRough'][self.mInterface]
             for k, v in configDict.items():
                 self.mSearchConfDict[k] = {}
                 self.mSearchConfDict[k]['range'] = self.__ExpandToList(v['range'])
@@ -198,6 +196,15 @@ class L1Search():
         while begin <= end:
             ret.append(begin)
             begin += step
+
+        ret0 = ret[0:int(len(ret)/2)].copy()
+        ret1 = ret[int(len(ret)/2):].copy()
+        ret0.reverse()
+        ret = ret1
+        index = 1
+        for value in ret0:
+            ret.insert(index, value)
+            index += 2
 
         return ret    
 
@@ -237,21 +244,16 @@ class L1Search():
 
         return ret
 
-     # API
-    def GetCaseSearched(self):
-        return self.mCurConf
-
-# Test Auto Search
-'''
+# Test Auto Tone Rough
 if __name__ == "__main__":
     pp = pprint.PrettyPrinter(indent=2)
 
-    l1_search = L1Search(None, "DAC")
+    l1_tone_rough = L1ToneRough(None, "DAC")
     
-    case_total = l1_search.GetCaseTotalMax()
+    case_total = l1_tone_rough.GetCaseTotalMax()
     count = 0
     while True:
-        config = l1_search.GetNextCase()
+        config = l1_tone_rough.GetNextCase()
         if config == None:
             break
         print("%3d: " %(count), end="")
@@ -259,8 +261,8 @@ if __name__ == "__main__":
         count += 1
 
     sys.exit(0)
-'''
 
+'''
 # Test Auto Tone
 if __name__ == "__main__":
     pp = pprint.PrettyPrinter(indent=2)
@@ -292,3 +294,4 @@ if __name__ == "__main__":
     print("\nTuned Result:")
     pp.pprint(tune_result)
     sys.exit(0)
+    '''
