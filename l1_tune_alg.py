@@ -26,7 +26,7 @@ class L1Tune():
         self.mDebug = False
         self.mCurConf = {}
         self.mTuneConfDict = {}
-        self.mTuneConfFileName = 'tranceiver_para_conf.json'
+        self.mTuneConfFileName = 'transceiver_para_conf.json'
         self.mCurIndex = 0
 
         if (file_name != None and len(file_name) > 0):
@@ -171,7 +171,7 @@ class L1TuneRough():
         self.mFinshed = False
         self.mCurConf = {}
         self.mSearchConfDict = {}
-        self.mSearchConfFileName = './tranceiver_para_conf.json'
+        self.mSearchConfFileName = './transceiver_para_conf.json'
         self.mInterface = interface
         self.mQuality = {}
         if (file_name != None and len(file_name) > 0):
@@ -248,7 +248,7 @@ class L1TuneRough():
 
         return ret
 
-'''
+#'''
 # Test Auto Tune Rough
 if __name__ == "__main__":
     pp = pprint.PrettyPrinter(indent=2)
@@ -266,8 +266,9 @@ if __name__ == "__main__":
         count += 1
 
     sys.exit(0)
-'''
+#'''
 
+'''
 # Test Auto Tone
 if __name__ == "__main__":
     pp = pprint.PrettyPrinter(indent=2)
@@ -278,7 +279,7 @@ if __name__ == "__main__":
     l1_tune.InitCaseBase(**Transceiver_Base_Default)
     pp.pprint(Transceiver_Base_Default)
 
-    offset_list = [0, 1, 1, -1, 1, -1, 1, 1, -1, 1, 0, 1, -1, 1, -1, 1, 1, 1, -1, 0]
+    offset_list = [1, -1, 1, -1, 1, -1, 1, 1, -1, 1, 0, 1, -1, 1, -1, 1, 1, 1, -1, 0]
     i = 0
 
     for offset in offset_list:
@@ -299,3 +300,4 @@ if __name__ == "__main__":
     print("\nTuned Result:")
     pp.pprint(tune_result)
     sys.exit(0)
+'''

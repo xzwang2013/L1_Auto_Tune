@@ -94,7 +94,10 @@ def GetValueInResult(collumn_name, row_index = 0, **kwargs):
         return kwargs['rows'][row_index][i]
     
     return None
-    
+
+def SaveEnhancedResultsSnapshot(**config_para):    
+    snapshot_name = "L1_Tune_Result_%d_%d_%d_%d_%d" % (config_para['case']['preEmphasis'], config_para['case']['mainTap'], config_para['case']['postEmphasis'], config_para['case']['txCoarseSwing'], config_para['case']['ctle'])
+    stc.perform("SaveEnhancedResultsSnapshotCommand", SnapshotName = snapshot_name)
 
 #########################################################################################
 
@@ -539,13 +542,13 @@ def DoTune():
             print("Link Down")
             l1_tune.CaseFeedback(-1)
             counter += 1
+            SaveEnhancedResultsSnapshot(**config_para)
             continue
 
         result = CheckLineQualityForTune()
         l1_tune.CaseFeedback(result)
 
-        snapshot_name = "L1_Tune_Result_%d_%d_%d_%d_%d" % (config_para['case']['preEmphasis'], config_para['case']['mainTap'], config_para['case']['postEmphasis'], config_para['case']['txCoarseSwing'], config_para['case']['ctle'])
-        stc.perform("SaveEnhancedResultsSnapshotCommand", SnapshotName = snapshot_name)
+        SaveEnhancedResultsSnapshot(**config_para)
         counter += 1
 
     g_tune_rough_final = l1_tune.GetFinalResult().copy()
