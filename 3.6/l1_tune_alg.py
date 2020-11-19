@@ -201,8 +201,8 @@ class L1TuneRough():
             ret.append(begin)
             begin += step
 
-        ret0 = ret[0:int(len(ret)/2)]
-        ret1 = ret[int(len(ret)/2):]
+        ret0 = ret[0:int(len(ret)/2)].copy()
+        ret1 = ret[int(len(ret)/2):].copy()
         ret0.reverse()
         ret = ret1
         index = 1
@@ -248,7 +248,7 @@ class L1TuneRough():
 
         return ret
 
-'''
+#'''
 # Test Auto Tune Rough
 if __name__ == "__main__":
     pp = pprint.PrettyPrinter(indent=2)
@@ -261,14 +261,14 @@ if __name__ == "__main__":
         config = l1_tune_rough.GetNextCase()
         if config == None:
             break
-        print("%3d: " %(count)),
+        print("%3d: " %(count), end="")
         print(config)
         count += 1
 
     sys.exit(0)
+#'''
+
 '''
-
-
 # Test Auto Tone
 if __name__ == "__main__":
     pp = pprint.PrettyPrinter(indent=2)
@@ -290,10 +290,11 @@ if __name__ == "__main__":
             print("Finished")
             break
 
-        print("quality_cur: "),
-        print("quality_fb: "),
+        print("quality_cur: ", end="")
+        print("quality_fb: ", end="")
         pp.pprint({'offset' : offset})
         # run testing ...
         l1_tune.CaseFeedback(offset)
 
     sys.exit(0)
+'''

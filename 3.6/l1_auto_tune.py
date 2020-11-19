@@ -1,7 +1,6 @@
 import time
 import json
 import requests
-import sys
 
 # This loads the TestCenter library.
 from StcPython import StcPython
@@ -9,8 +8,7 @@ from StcPython import StcPython
 # This loads the AN/LT Transceiver Tune library.
 from l1_tune_alg import L1Tune, L1TuneRough
 
-print("Loading TestCenter library ... "),
-sys.stdout.flush()
+print("Loading TestCenter library ... ", end="", flush=True)
 stc = StcPython()
 print("Done")
 
@@ -70,8 +68,7 @@ def ConfigToDevice(**kwargs):
     global g_hport2
     global g_lane_count
 
-    print("   Configuring ... "),
-    sys.stdout.flush()
+    print("   Configuring ... ", end="", flush=True)
     for k, v in kwargs.items():
         i = 1
         while i <= g_lane_count: 
@@ -448,8 +445,7 @@ def SetupTuneEnv(**kwargs):
 
     print("lane_count: %d" %(g_lane_count))
 
-    print("Disable AN, set rxmode to %s, set all lane to None ... " %(g_pg_rx_mode)),
-    sys.stdout.flush()
+    print("Disable AN, set rxmode to %s, set all lane to None ... " %(g_pg_rx_mode), end="", flush=True)
     stc.config("%s.l1configgroup.l1portpcs" %g_hport1, AutoNegotiationEnabled="False")
     stc.config("%s.l1configgroup.l1portpcs" %g_hport2, AutoNegotiationEnabled="False")
 
@@ -491,8 +487,8 @@ def DoTuneRough():
         if config_para == None:
             print("Tune Rough finished. Fail")
             break
-        print("%3d : " %(counter)),
-        print(config_para),
+        print("%3d : " %(counter), end="")
+        print(config_para, end="")
 
         ConfigToDevice(**config_para)
 
@@ -536,8 +532,8 @@ def DoTune():
         if config_para['result'] == False:
             print("Finished")
             break
-        print("%3d : " %(counter)),
-        print(config_para['case']),
+        print("%3d : " %(counter), end="")
+        print(config_para['case'], end="")
 
         ConfigToDevice(**config_para['case'])
 
@@ -561,9 +557,9 @@ def DoTune():
 if __name__ == "__main__":
     SetupTuneEnv(port1 = g_port1_location, port2 = g_port2_location, rxmode = "DAC")
     g_tune_rough_final = DoTuneRough()
-    print("Tune Rough Result: "),
+    print("Tune Rough Result: ", end="")
     print(g_tune_rough_final)
 
     g_tune_final = DoTune()
-    print("Tune Result: "),
+    print("Tune Result: ", end="")
     print(g_tune_final)
