@@ -1,0 +1,201 @@
+<?xml version="1.0" ?>
+<stc:meta package="spirent.L1Test" plugin="stakcommands" version="0.0.0-0" xmlns:stc="urn:www.spirentcom.com:XMLSchema.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+<stc:class name="L1ConfigCommand" displayName="L1 config" bllDirectInterface="false">
+    <stc:attribute internalIsEnum="false" internalType="bool" name="none" type="core.Sequenceable" value="false" /> 
+    <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.CommandDescription" value="L1 config" /> 
+    <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.CommandCategory" value="L1Test" /> 
+
+	<stc:property category="input" name="PortList" displayName="Port List" type="handle" default="" minOccurs="0" maxOccurs="unbounded">
+		<stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Port"/>
+		<stc:attribute internalIsEnum="false" internalType="string" name="none" type="core.ValidHandleTypes" value="Port" />
+	</stc:property>
+	
+    <!-- L1 Port Config -->
+    <stc:property category="input" name="LinkRecoveryEnabled" displayName="Link Recovery Enabled" type="bool" default="TRUE" minOccurs="1" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Enable or disable link recovery"/>
+    </stc:property>
+	<stc:property category="input" name="TxPpmAdjust" displayName="TxPpmAdjust" type="s32" default="0" minOccurs="1" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Transmit ppm clock adjustment"/>
+    </stc:property>
+
+    <!-- L1 Port Equalizer Config -->
+    <stc:property category="input" name="CtleEnabled" displayName="Ctle Enabled" type="bool" default="TRUE" minOccurs="1" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Enable or disable auto CTLE"/>
+    </stc:property>
+	<stc:property category="input" name="DfeEnabled" displayName="Dfe Enabled" type="bool" default="TRUE" minOccurs="1" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Enable or disable auto Dfe"/>
+    </stc:property>
+		
+    <!-- L1 Port PCS Config -->
+    <stc:property category="input" name="AutoNegotiationEnabled" displayName="Auto Negotiation Enabled" type="bool" default="TRUE" minOccurs="1" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Enable or disable AutoNegotiation"/>
+    </stc:property>
+	<stc:property category="input" name="IgnoreLinkStatus" displayName="Ignore Link Status" type="bool" default="FALSE" minOccurs="1" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Whether to continue sending traffic when a link fault is detected"/>
+    </stc:property>
+	<stc:property category="input" name="LinkTrainingEnabled" displayName="Link Training Enabled" type="bool" default="TRUE" minOccurs="1" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Enable or Disable Link training"/>
+    </stc:property>
+	
+    <!-- L1 PAM4 AN/LT Transceiver Config -->
+    <stc:property category="input" name="MainTap" displayName="Main Tap" type="s8" default="0" minOccurs="1" maxOccurs="unbounded">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Specify Main tap value"/>
+        <stc:numericValidation minInclusive="-20" maxInclusive="20"/>
+    </stc:property>
+	<stc:property category="input" name="PostEmphasis" displayName="Post Emphasis" type="s8" default="0" minOccurs="1" maxOccurs="unbounded">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="The post-emphasis tap value"/>
+        <stc:numericValidation minInclusive="-20" maxInclusive="20"/>
+    </stc:property>
+	<stc:property category="input" name="PreEmphasis" displayName="Pre Emphasis" type="s8" default="0" minOccurs="1" maxOccurs="unbounded">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="The pre-emphasis tap value"/>
+        <stc:numericValidation minInclusive="-20" maxInclusive="20"/>
+    </stc:property>
+	<stc:enumeration name="EnumTxMode" >
+      <stc:enum name="LOOPBACK"    value="0" displayName="loopback"/>
+      <stc:enum name="DAC"    value="1" displayName="dac"/>
+    </stc:enumeration>
+	<stc:property category="input" name="RxMode" displayName="RxMode" type="u8" default="LOOPBACK" minOccurs="1" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Rx mode"/>
+        <stc:enumerationRef ref="EnumTxMode"/>
+    </stc:property>
+	<stc:property category="input" name="TxCoarseSwing" displayName="Tx Coarse Swing" type="s8" default="0" minOccurs="1" maxOccurs="unbounded">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Tx coarse swing"/>
+        <stc:numericValidation minInclusive="0" maxInclusive="6"/>
+    </stc:property>
+	<stc:property category="input" name="TxEnabled" displayName="Tx Enabled" type="bool" default="TRUE" minOccurs="1" maxOccurs="unbounded">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Transmitter enabled"/>
+    </stc:property>
+    <stc:property category="input" name="TransceiverLaneNum" displayName="Transceiver Lane Num" type="s8" default="0" minOccurs="1" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Provides Lane number in Port"/>
+    </stc:property>
+    <stc:property category="input" name="TransceiverLaneNumList" displayName="Transceiver Lane Num List" type="string" default="" minOccurs="0" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Provides Lane number list in Port"/>
+    </stc:property>
+    <stc:property category="input" name="MainTapList" displayName="Main Tap List" type="string" default="" minOccurs="0" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Main tap value list"/>
+        <stc:numericValidation minInclusive="-20" maxInclusive="20"/>
+    </stc:property>
+	<stc:property category="input" name="PostEmphasisList" displayName="Post Emphasis List" type="string" default="" minOccurs="0" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="List of the post-emphasis tap value"/>
+        <stc:numericValidation minInclusive="-20" maxInclusive="20"/>
+    </stc:property>
+	<stc:property category="input" name="PreEmphasisList" displayName="Pre Emphasis List" type="string" default="" minOccurs="0" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="List of the pre-emphasis tap value"/>
+        <stc:numericValidation minInclusive="-20" maxInclusive="20"/>
+    </stc:property>
+	<stc:property category="input" name="RxModeList" displayName="Rx Mode List" type="string" default="" minOccurs="0" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="List of Rx mode"/>
+    </stc:property>
+	<stc:property category="input" name="TxCoarseSwingList" displayName="Tx Coarse Swing List" type="string" default="" minOccurs="0" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="List of Tx coarse swing"/>
+        <stc:numericValidation minInclusive="0" maxInclusive="6"/>
+    </stc:property>
+	<stc:property category="input" name="TxEnabledList" displayName="Tx Enabled List" type="string" default="" minOccurs="0" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="List of Transmitter enabled"/>
+    </stc:property>
+
+    <!-- L1 PCS Lanes Config -->
+    <stc:property category="input" name="PcsSkewLaneNum" displayName="Pcs Skew Lane Num" type="u8" default="0" minOccurs="1" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Provides Lane number in Port"/>
+    </stc:property>
+	<stc:property category="input" name="TxSkewBits" displayName="Tx Skew Bits" type="u32" default="0" minOccurs="1" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Transmit lane skew in bits"/>
+    </stc:property>
+	<stc:property category="input" name="PcsSkewLaneNumList" displayName="Pcs Skew Lane Num List" type="string" default="" minOccurs="0" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Lane list"/>
+    </stc:property>
+	<stc:property category="input" name="TxSkewBitsList" displayName="Tx Skew Bits List" type="string" default="" minOccurs="0" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="List of transmit lane skew in bits"/>
+    </stc:property>
+
+    <!-- L1 PRBS Lanes Config -->
+    <stc:property category="input" name="PrbsLaneNum" displayName="Prbs Lane Num" type="u8" default="0" minOccurs="1" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Provides Lane number in the Port"/>
+    </stc:property>
+	<stc:enumeration name="EnumTxPattern" >
+      <stc:enum name="NONE"    value="0" displayName="none"/>
+      <stc:enum name="PRBS7"    value="1" displayName="PRBS 7"/>
+      <stc:enum name="PRBS9"  value="2" displayName="PRBS 9"/>
+      <stc:enum name="PRBS15" value="3" displayName="PRBS 15"/>
+      <stc:enum name="PRBS23"   value="4" displayName="PRBS 23"/>
+      <stc:enum name="PRBS31" value="5" displayName="PRBS 31"/>
+    </stc:enumeration>
+	<stc:property category="input" name="TxPattern" displayName="Tx Pattern" type="u8" default="NONE" minOccurs="1" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Transmit Pattern"/>
+        <stc:enumerationRef ref="EnumTxPattern"/>
+    </stc:property>
+	<stc:property category="input" name="Invert" displayName="Invert TX pattern" type="bool" default="FALSE" minOccurs="1" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Invert TX pattern"/>
+    </stc:property>
+	<stc:property category="input" name="PrbsLaneNumList" displayName="Prbs Lane Num List" type="string" default="" minOccurs="0" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="lane list"/>
+    </stc:property>
+	<stc:property category="input" name="TxPatternList" displayName="Tx Pattern List" type="string" default="" minOccurs="0" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Transmit Pattern list"/>
+    </stc:property>
+	<stc:property category="input" name="InvertList" displayName="Invert List" type="string" default="" minOccurs="0" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Invert List"/>
+    </stc:property>
+
+    <!-- Fec Error Injection Config -->
+	<stc:property category="input" name="CodewordAmxity" displayName="Codeword A Mxity" type="bool" default="TRUE" minOccurs="1" maxOccurs="3">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Multiplicity of codeword A errors"/>
+    </stc:property>
+	<stc:property category="input" name="CodewordBmxity" displayName="Codeword B Mxity" type="bool" default="TRUE" minOccurs="1" maxOccurs="3">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Multiplicity of codeword B errors"/>
+    </stc:property>
+	<stc:property category="input" name="StartOfCodewordMask" displayName="Start Of Codeword Mask" type="string" default="0000000000000000000000000000000000000000" minOccurs="1" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="160-bit hex mask for start of codeword error injection. For 100/50g ports it is 320-bit hex"/>
+    </stc:property>
+	<stc:property category="input" name="EndOfParityMask" displayName="End Of Parity Mask" type="string" default="0000000000000000000000000000000000000000" minOccurs="1" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="160-bit hex mask for start of codeword error injection. This property is not applicable for 100/50g ports"/>
+    </stc:property>
+
+    <!-- Random Error Injection Config -->
+	<stc:property category="input" name="Rate" displayName="Rate" type="string" default="1.0e-3" minOccurs="1" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Error rate"/>
+    </stc:property>
+	<stc:property category="input" name="Enabled" displayName="Enabled" type="bool" default="TRUE" minOccurs="1" maxOccurs="unbounded">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Enable or Disable Error injector"/>
+    </stc:property>
+	<stc:property category="input" name="ErrorInjectorsLaneNum" displayName="Error Injectors Lane Num" type="u8" default="0" minOccurs="1" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Provides Lane number in the Port"/>
+    </stc:property>
+	<stc:property category="input" name="ErrorInjectorsLaneNumList" displayName="Error Injectors Lane Num List" type="string" default="" minOccurs="0" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Provides Lane number list in the Port"/>
+    </stc:property>
+	<stc:property category="input" name="EnabledList" displayName="Enabled List" type="string" default="" minOccurs="0" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="List of values to Enable or Disable Error injector for lanes"/>
+    </stc:property>
+
+</stc:class>
+
+<stc:class
+    name="L1AutoTuneCommand"
+    displayName="L1 Transceiver Auto Tune Command"
+    canCreate="true"
+    bllDirectInterface="false">
+
+	<stc:attribute internalIsEnum="false" internalType="bool" name="none" type="core.Sequenceable" value="true"/>
+    <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.CommandCategory" value="L1Test"/>
+    <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.CommandDescription" value="L1 Transceiver Auto Tone Command"/>
+
+    <stc:property name="PortSrc" type="handle" default="0" category="input"
+                      displayName="Port Src" minOccurs="1" maxOccurs="1">
+            <stc:attribute type="core.ValidHandleTypes" value="Project,Port" internalType="string"/>
+            <stc:attribute type="framework.PropertyDescription"
+                         value="Port to do transceiver parameters auto tune."
+                         internalType="string"/>
+    </stc:property>
+    
+    <stc:property name="PortDst" type="handle" default="0" category="input"
+                      displayName="Port Dst" minOccurs="1" maxOccurs="1">
+            <stc:attribute type="core.ValidHandleTypes" value="Project,Port" internalType="string"/>
+            <stc:attribute type="framework.PropertyDescription"
+                         value="Port to do transceiver parameters auto tune."
+                         internalType="string"/>
+    </stc:property>    
+</stc:class>
+
+</stc:meta>
