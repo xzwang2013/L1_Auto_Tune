@@ -17,7 +17,7 @@ from l1_auto_tune import AutoTune, Reset
 
 def validate(PortSrc, PortDst):
     if PortSrc == None or PortDst == None:
-        return "Port can't be None." 
+        return "Ports can't be None." 
     return ''
 
 def run(PortSrc, PortDst):

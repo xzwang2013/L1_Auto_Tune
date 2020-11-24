@@ -1,3 +1,16 @@
+##############################################################################
+#                                                                            #
+# Algorithm name: L1Tune and L1TuneRough                                     #
+#                                                                            #
+# Purpose: The purpose of this algorithm is to find best transceiver         #
+# parameters automatically on ethernet ports like 50/100/200/400 gig         #
+#                                                                            #
+# This algorithm is used to get test cases one by one automatically          #
+#                                                                            #
+# 2020/11 Xiaozhou.Wang(Shawn)                                               #
+#                                                                            #
+##############################################################################
+
 import sys
 import os
 import json
@@ -26,7 +39,7 @@ class L1Tune():
         self.mDebug = False
         self.mCurConf = {}
         self.mTuneConfDict = {}
-        self.mTuneConfFileName = 'transceiver_para_conf.json'
+        self.mTuneConfFileName = './transceiver_para_conf.json'
         self.mCurIndex = 0
 
         if (file_name != None and len(file_name) > 0):
@@ -136,6 +149,7 @@ class L1Tune():
             ret['result'] = False
         else:
             ret['result'] = True
+            ret['resultcheck'] = v['resultCheck']
             ret['case'] = self.mCurConf.copy()
             ret['case'][k] = self.mTuneConfDict[k]['cur']
 
@@ -161,7 +175,6 @@ Transceiver_Base_Default = {
 }
 
 class L1TuneRough():
-    
     class RangeIndexDef:
         begin = 0
         end = 1

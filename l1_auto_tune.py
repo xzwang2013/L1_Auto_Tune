@@ -1,3 +1,16 @@
+##############################################################################
+#                                                                            #
+# API name: AutoTune                                                         #
+#                                                                            #
+# Purpose: The purpose of this AutoTune is to find best transceiver          #
+# parameters automatically on ethernet ports like 50/100/200/400 gig         #
+#                                                                            #
+# This API AutoTune is used for stack command                                #
+#                                                                            #
+# 2020/11 Xiaozhou.Wang(Shawn)                                               #
+#                                                                            #
+##############################################################################
+
 import time
 import json
 import requests
@@ -196,11 +209,11 @@ def GetLinkStatusResult():
     return ret_dict
 
 def VerifyLinkStatusUp():
-    Sleep(10)
     RefreshTransceiverParaOnGui()
 
     counter = 0
     while counter < 6:
+      Sleep(5)
       ret = GetLinkStatusResult()
       link_status = GetValueInResult("link_status", g_port1_name, **ret)
       if link_status != None :
@@ -361,9 +374,8 @@ def CheckLineQualityForTuneRough():
     global g_hport2
     global g_lane_count
 
-    Sleep(10)
-    RefreshTransceiverParaOnGui()
     Sleep(5)
+    RefreshTransceiverParaOnGui()
     #stc.perform("L1PcsClearHistoryCommand", portlist = g_hport2)
     #stc.perform("L1PcsClearCommand", portlist = g_hport2)
     stc.perform("ResultsClearAllCommand")
@@ -382,61 +394,76 @@ def CheckLineQualityForTuneRough():
     print("Can't get uncorrect_cw")
     return False
 
-g_errors_per_sec = 0
-g_pre_fec_err_rate = 0
-def GetSymbolErrorsInfo(port):
-    Sleep(10)
-    #stc.perform("L1PcsClearCommand", portlist = port)
+g_errors_per_sec_src = 0
+g_pre_fec_err_rate_src = 0
+g_errors_per_sec_dst = 0
+g_pre_fec_err_rate_dst = 0
+def GetSymbolErrorsInfo(port_name):
     stc.perform("ResultsClearAllCommand")
     Sleep(10)
 
     result = GetPortPcsResult()
-    ret = GetValueInResult("symbol_errors_per_sec", g_port2_name, **result)
+    ret = GetValueInResult("symbol_errors_per_sec", port_name, **result)
     if ret != None:
         ret = int(ret)
 
-    ret1 = GetValueInResult("pre_fec_ser", g_port2_name, **result)
+    ret1 = GetValueInResult("pre_fec_ser", port_name, **result)
 
     return ret, ret1
 
-def CheckLineQualityForTune():
+def CheckLineQualityForTune(resultcheck):
     global g_hport1
     global g_hport2
-    global g_lane_count
-    global g_errors_per_sec
-    global g_pre_fec_err_rate
+    global g_errors_per_sec_src
+    global g_pre_fec_err_rate_src
+    global g_errors_per_sec_dst
+    global g_pre_fec_err_rate_dst
+
+    if resultcheck == 'dst':
+        port_name = g_port2_name
+        errors_per_sec_last = g_errors_per_sec_dst
+        pre_fec_err_rate_last = g_pre_fec_err_rate_dst
+    else:
+        port_name = g_port1_name
+        errors_per_sec_last = g_errors_per_sec_src
+        pre_fec_err_rate_last = g_pre_fec_err_rate_src
 
     stc.perform("ResultsClearAllCommand")
     Sleep(10)
 
     counter = 0
     while counter < 4:
-        errors_per_sec, pre_fec_err_rate = GetSymbolErrorsInfo(g_hport2)
-        if errors_per_sec == 0 or errors_per_sec > 1000000:
+        errors_per_sec, pre_fec_err_rate = GetSymbolErrorsInfo(port_name)
+        if errors_per_sec == 0 or errors_per_sec > 100000:
             counter += 1
             Sleep(5)
             continue
         else:
             break
 
-    if errors_per_sec == 0:
+    if errors_per_sec == 0 and resultcheck == 'dst':
         return 65535
 
-    offset = abs(errors_per_sec - g_errors_per_sec)
-    if offset < int(g_errors_per_sec * 0.1):
+    offset = abs(errors_per_sec - errors_per_sec_last)
+    if offset < int(errors_per_sec_last * 0.1):
         # Deem as jitter
-        errors_per_sec = g_errors_per_sec
+        errors_per_sec = errors_per_sec_last
 
     if g_stackcommand == False:
-        print("Cur Current Pre-Fec Rate: %e (%d), Min Current Pre-Fec Rate: %e (%d)" %(pre_fec_err_rate, errors_per_sec, g_pre_fec_err_rate, g_errors_per_sec))
+        print("Check Result: %s, Cur Current Pre-Fec Rate: %e (%d), Min Current Pre-Fec Rate: %e (%d)" %(resultcheck, pre_fec_err_rate, errors_per_sec, pre_fec_err_rate_last, errors_per_sec_last))
     else:
-        stc.log("INFO", "L1AutoTune - Cur Current Pre-Fec Rate: %e (%d), Min Current Pre-Fec Rate: %e (%d)" %(pre_fec_err_rate, errors_per_sec, g_pre_fec_err_rate, g_errors_per_sec))
+        info = "L1AutoTune - Check Result: %s, Cur Current Pre-Fec Rate: %e (%d), Min Current Pre-Fec Rate: %e (%d)" %(str(resultcheck), pre_fec_err_rate, errors_per_sec, pre_fec_err_rate_last, errors_per_sec_last)
+        stc.log("INFO", info)
 
-    if errors_per_sec < g_errors_per_sec:
-        g_errors_per_sec = errors_per_sec
-        g_pre_fec_err_rate = pre_fec_err_rate
+    if errors_per_sec < errors_per_sec_last:
+        if resultcheck == 'dst':
+            g_errors_per_sec_dst = errors_per_sec
+            g_pre_fec_err_rate_dst = pre_fec_err_rate
+        else:
+            g_errors_per_sec_src = errors_per_sec
+            g_pre_fec_err_rate_src = pre_fec_err_rate
         return 1
-    elif errors_per_sec > g_errors_per_sec:
+    elif errors_per_sec > errors_per_sec_last:
         return -1
     
     return 0
@@ -572,7 +599,7 @@ def DoTuneRough():
             if g_stackcommand == False:
                 print("Tune Rough finished. Fail")
             else:
-                stc.log("INFO", "L1AutoTune - Tune Rough finished. Fail")
+                stc.log("INFO", "L1AutoTune - Tune Rough finished, fail")
             return None
         print("%3d : " %(counter)),
         print(config_para),
@@ -592,9 +619,9 @@ def DoTuneRough():
         result = CheckLineQualityForTuneRough()
         if result == True:
             if g_stackcommand == False:
-                print("Tune Rough finished, success.")
+                print("Tune Rough finished, success")
             else:
-                stc.log("INFO", "L1AutoTune - Tune Rough finished, success.")
+                stc.log("INFO", "L1AutoTune - Tune Rough finished, success")
             break
         
         SaveEnhancedResultsSnapshot(**config_para)
@@ -607,13 +634,17 @@ def DoTune():
     global g_hport2
     global g_tune_rough_final
     global g_tune_final
-    global g_errors_per_sec
+    global g_errors_per_sec_src
+    global g_pre_fec_err_rate_src
+    global g_errors_per_sec_dst
+    global g_pre_fec_err_rate_dst
     
-    g_errors_per_sec, g_pre_fec_err_rate = GetSymbolErrorsInfo(g_hport2)
+    g_errors_per_sec_src, g_pre_fec_err_rate_src = GetSymbolErrorsInfo(g_port1_name)
+    g_errors_per_sec_dst, g_pre_fec_err_rate_dst = GetSymbolErrorsInfo(g_port2_name)
     if g_stackcommand == False:
-        print("Current Pre-Fec Rate: %e (%d)" %(g_pre_fec_err_rate, g_errors_per_sec))
+        print("Current Src Pre-Fec Rate: %e (%d), Dst Pre-Fec Rate: %e (%d)" %(g_pre_fec_err_rate_src, g_errors_per_sec_src, g_pre_fec_err_rate_dst, g_errors_per_sec_dst))
     else:
-        stc.log("INFO", "L1AutoTune - Current Pre-Fec Rate: %e (%d)" %(g_pre_fec_err_rate, g_errors_per_sec))
+        stc.log("INFO", "L1AutoTune - Current Src Pre-Fec Rate: %e (%d), Dst Pre-Fec Rate: %e (%d)" %(g_pre_fec_err_rate_src, g_errors_per_sec_src, g_pre_fec_err_rate_dst, g_errors_per_sec_dst))
     l1_tune = L1Tune(None)
 
     case_total = l1_tune.GetCaseTotalMax()
@@ -642,8 +673,9 @@ def DoTune():
         if g_stackcommand == False:
             print("%3d : " %(counter)),
             print(config_para['case']),
-        #else:
-            #stc.log("INFO", config_para['case'])
+        else:
+            info = "L1AutoTune - %3d : %s" %(counter, str(config_para['case']))
+            stc.log("INFO", info)
 
         ConfigToDevice(True, **config_para['case'])
         result = VerifyLinkStatusUp()
@@ -651,12 +683,12 @@ def DoTune():
             print("Link Down")
             l1_tune.CaseFeedback(-1)
         else:
-            result = CheckLineQualityForTune()
+            result = CheckLineQualityForTune(config_para['resultcheck'])
             if result == 65535:
                 if g_stackcommand == False:
                     print("Tune Finished, error zearo")
                 else:
-                    stc.log("INFO", "L1AutoTune - Tune Finished, CW error zero.")
+                    stc.log("INFO", "L1AutoTune - Tune Finished, CW error zero")
                 SaveEnhancedResultsSnapshot(**config_para)
                 break
             else:
@@ -700,6 +732,8 @@ def AutoTune(portSrc, portDst, rxMode):
 
     g_tune_final = DoTune()
     ConfigToDevice(True, **g_tune_final)
+    RefreshTransceiverParaOnGui()
+    stc.perform("ResultsClearAllCommand")
 
     return True
 
@@ -707,7 +741,7 @@ if __name__ == "__main__":
     SetupTuneEnv(port1 = g_port1_location, port2 = g_port2_location, rxmode = "DAC")
     g_tune_rough_final = DoTuneRough()
     if g_tune_rough_final == None:
-        print("Tune Rough Failed.")
+        print("Tune Rough Failed")
         exit
     else:
         print("Tune Rough Result: "),
@@ -715,6 +749,7 @@ if __name__ == "__main__":
 
     g_tune_final = DoTune()
     ConfigToDevice(True, **g_tune_final)
+    stc.perform("ResultsClearAllCommand")
 
     print("Tune Result: "),
     print(g_tune_final)
