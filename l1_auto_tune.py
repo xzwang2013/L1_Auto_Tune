@@ -376,8 +376,6 @@ def CheckLineQualityForTuneRough():
 
     Sleep(5)
     RefreshTransceiverParaOnGui()
-    #stc.perform("L1PcsClearHistoryCommand", portlist = g_hport2)
-    #stc.perform("L1PcsClearCommand", portlist = g_hport2)
     stc.perform("ResultsClearAllCommand")
     Sleep(10)
     
@@ -386,12 +384,17 @@ def CheckLineQualityForTuneRough():
     if ret != None:
         uncorrect_cw = int(ret)
         if g_stackcommand == False:
-            print("uncorrect_cw = %d" %uncorrect_cw)
+            print("Current total uncorrect CW is %d" %uncorrect_cw)
         else:
-             stc.log("INFO", "uncorrect_cw = %d" %uncorrect_cw)
+            stc.log("INFO", "L1AutoTune - Current total uncorrect CW is %d" %uncorrect_cw)
+
         return uncorrect_cw == 0
 
-    print("Can't get uncorrect_cw")
+    if g_stackcommand == False:
+        print("Can't get current total uncorrect CW")
+    else:
+        stc.log("INFO", "L1AutoTune - Can't get current total uncorrect CW")
+
     return False
 
 g_errors_per_sec_src = 0
@@ -531,20 +534,33 @@ def SetupTuneEnv(**kwargs):
 
     # Check L1 Mode
     if stc.get("%s.l1configgroup" % g_hport1) == None:
-        print("%s Not in L1 mode, exit." %g_port1_location)
-        exit
+        if g_stackcommand == False:
+            print("%s Not in L1 mode, exit" %g_port1_location)
+            exit
+        else:
+            stc.log("INFO", "L1AutoTune - PortSrc isn't in l1 mode")
+            return False
+
     if g_hport2 != None:
         if stc.get("%s.l1configgroup" % g_hport2) == None:
-            print("%s Not in L1 mode, exit."  %g_port2_location)
-            exit
+            if g_stackcommand == False:
+                print("%s Not in L1 mode, exit"  %g_port2_location)
+                exit
+            else:
+                stc.log("INFO", "L1AutoTune - PortDst isn't in l1 mode")
+                return False
 
     print("Get lane_count")
     g_lane_count = int(stc.get("%s.l1configgroup.l1porttxcvrs" % g_hport1, "lanecount"))
     if g_hport2 != None:
         lane_count_port2 = int(stc.get("%s.l1configgroup.l1porttxcvrs" % g_hport2, "lanecount"))
         if g_lane_count != lane_count_port2:
-            print("Lane_count of two ports not equal(%d, %d), exit." %(g_lane_count, lane_count_port2))
-            exit
+            if g_stackcommand == False:
+                print("Lane_count of two ports not equal(%d, %d), exit" %(g_lane_count, lane_count_port2))
+                exit
+            else:
+                stc.log("INFO", "L1AutoTune - Lane_count of two ports not equal(%d, %d)" %(g_lane_count, lane_count_port2))
+                return False
 
     print("lane_count: %d" %(g_lane_count))
 
@@ -575,6 +591,7 @@ def SetupTuneEnv(**kwargs):
     g_resultdbid = stc.get("project1.testinfo", "resultdbid")
     print("DBID: %s" %(g_resultdbid))
 
+    return True
 
 def DoTuneRough():
     global g_pg_rx_mode
@@ -601,8 +618,13 @@ def DoTuneRough():
             else:
                 stc.log("INFO", "L1AutoTune - Tune Rough finished, fail")
             return None
-        print("%3d : " %(counter)),
-        print(config_para),
+
+        if g_stackcommand == False:
+            print("%3d : " %(counter)),
+            print(config_para),
+        else:
+            info = "L1AutoTune - %3d : %s" %(counter, str(config_para))
+            stc.log("INFO", info)
 
         ConfigToDevice(True, **config_para)
 
@@ -724,8 +746,19 @@ def Reset():
 def AutoTune(portSrc, portDst, rxMode):
     global g_tune_rough_final
     global g_tune_final
+    global g_errors_per_sec_src
+    global g_pre_fec_err_rate_src
+    global g_errors_per_sec_dst
+    global g_pre_fec_err_rate_dst
 
-    SetupTuneEnv(port1 = portSrc, port2 = portDst, rxmode =rxMode, stackcommand = True)
+    result = SetupTuneEnv(port1 = portSrc, port2 = portDst, rxmode =rxMode, stackcommand = True)
+    if result == False:
+        if g_stackcommand == False:
+            print("Setup tune env fail")
+        else:
+            stc.log("INFO", "L1AutoTune - Setup tune env fail")
+        return False
+
     g_tune_rough_final = DoTuneRough()
     if g_tune_rough_final == None:
         return False
@@ -735,6 +768,14 @@ def AutoTune(portSrc, portDst, rxMode):
     RefreshTransceiverParaOnGui()
     stc.perform("ResultsClearAllCommand")
 
+    Sleep(10)
+    g_errors_per_sec_src, g_pre_fec_err_rate_src = GetSymbolErrorsInfo(g_port1_name)
+    g_errors_per_sec_dst, g_pre_fec_err_rate_dst = GetSymbolErrorsInfo(g_port2_name)
+    if g_stackcommand == False:
+        print("Final Src Pre-Fec Rate: %e (%d), Dst Pre-Fec Rate: %e (%d)" %(g_pre_fec_err_rate_src, g_errors_per_sec_src, g_pre_fec_err_rate_dst, g_errors_per_sec_dst))
+    else:
+        stc.log("INFO", "L1AutoTune - Final Src Pre-Fec Rate: %e (%d), Dst Pre-Fec Rate: %e (%d)" %(g_pre_fec_err_rate_src, g_errors_per_sec_src, g_pre_fec_err_rate_dst, g_errors_per_sec_dst))
+    
     return True
 
 if __name__ == "__main__":

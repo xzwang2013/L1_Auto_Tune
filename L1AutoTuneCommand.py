@@ -16,8 +16,11 @@ from StcPython import StcPython
 from l1_auto_tune import AutoTune, Reset
 
 def validate(PortSrc, PortDst):
-    if PortSrc == None or PortDst == None:
-        return "Ports can't be None." 
+    if PortSrc == "":
+        return "L1AutoTune - PortSrc can't be empty" 
+    elif PortDst == "":
+        return "L1AutoTune - PortDst can't be empty" 
+
     return ''
 
 def run(PortSrc, PortDst):
