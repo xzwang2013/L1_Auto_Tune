@@ -175,7 +175,8 @@
     name="L1AutoTuneCommand"
     displayName="L1 Transceiver Auto Tune Command"
     canCreate="true"
-    bllDirectInterface="false">
+    bllDirectInterface="false"
+    pythonVirtualenv="spirent.magellan">
 
 	<stc:attribute internalIsEnum="false" internalType="bool" name="none" type="core.Sequenceable" value="true"/>
     <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.CommandCategory" value="L1Test"/>

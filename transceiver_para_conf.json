@@ -1,29 +1,54 @@
 {
     "Tune": {
-        "preEmphasis" : {
-            "range" : [-20, 20, 1],
-            "resultCheck" : "dst"
+        "COPPER":
+        {
+            "preEmphasis" : {
+                "range" : [-20, 20, 1],
+                "resultCheck" : "dst"
+            },
+            "mainTap" : {
+                "range" : [-20, 20, 1],
+                "resultCheck" : "dst"
+            },
+            "postEmphasis" : {
+                "range" : [-20, 20, 1],
+                "resultCheck" : "dst"
+            },
+            "txCoarseSwing" : {
+                "range" : [4, 4, 1],
+                "resultCheck" : "dst"
+            },
+            "ctle" : {
+                "range" : [16, 16, 2],
+                "resultCheck" : "src"
+            }
         },
-        "mainTap" : {
-            "range" : [-20, 20, 1],
-            "resultCheck" : "dst"
-        },
-        "postEmphasis" : {
-            "range" : [-20, 20, 1],
-            "resultCheck" : "dst"
-        },
-        "txCoarseSwing" : {
-            "range" : [0, 6, 1],
-            "resultCheck" : "dst"
-        },
-        "ctle" : {
-            "range" : [0, 63, 1],
-            "resultCheck" : "src"
+        "FIBER":
+        {
+            "preEmphasis" : {
+                "range" : [-20, 20, 1],
+                "resultCheck" : "dst"
+            },
+            "mainTap" : {
+                "range" : [-20, 20, 1],
+                "resultCheck" : "dst"
+            },
+            "postEmphasis" : {
+                "range" : [-20, 20, 1],
+                "resultCheck" : "dst"
+            },
+            "txCoarseSwing" : {
+                "range" : [4, 4, 1],
+                "resultCheck" : "dst"
+            },
+            "ctle" : {
+                "range" : [0, 63, 1],
+                "resultCheck" : "src"
+            }
         }
     },
-
     "TuneRough" : {
-        "DAC" : {
+        "COPPER" : {
             "preEmphasis" : {
                 "range" : [-6, 0, 2]
                 
@@ -41,7 +66,7 @@
                 "range" : [16, 16, 2]
             }
         },
-        "OPT" : {
+        "FIBER" : {
             "preEmphasis" : {
                 "range" : [-4, 0, 2]
             },

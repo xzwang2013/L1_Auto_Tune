@@ -24,7 +24,7 @@ def validate(PortSrc, PortDst):
     return ''
 
 def run(PortSrc, PortDst):
-    return AutoTune(PortSrc, PortDst, "DAC")
+    return AutoTune(PortSrc, PortDst)
 
 def reset():
     Reset()

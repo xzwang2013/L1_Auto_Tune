@@ -6,8 +6,9 @@
 # parameters automatically on ethernet ports like 50/100/200/400 gig         #
 #                                                                            #
 # This algorithm is used to get test cases one by one automatically          #
+# with auto optimized prioriry                                               #
 #                                                                            #
-# 2020/11 Xiaozhou.Wang(Shawn)                                               #
+# 2020/12/01 First Draft Xiaozhou.Wang(Shawn)                                #
 #                                                                            #
 ##############################################################################
 
@@ -35,11 +36,12 @@ class L1Tune():
         end = 1
         step = 2
 
-    def __init__(self, file_name):
+    def __init__(self, file_name, interface):
         self.mDebug = False
         self.mCurConf = {}
         self.mTuneConfDict = {}
         self.mTuneConfFileName = './transceiver_para_conf.json'
+        self.mInterface = interface
         self.mCurIndex = 0
 
         if (file_name != None and len(file_name) > 0):
@@ -51,7 +53,7 @@ class L1Tune():
         path = os.path.dirname(os.path.abspath(__file__))
         
         with open(os.path.normpath(os.path.join(path, self.mTuneConfFileName)), 'r') as fid:
-            self.mTuneConfDict = json.load(fid)['Tune']
+            self.mTuneConfDict = json.load(fid)['Tune'][self.mInterface]
 
     def GetCaseTotalMax(self):
         result = 1
@@ -266,7 +268,7 @@ class L1TuneRough():
 if __name__ == "__main__":
     pp = pprint.PrettyPrinter(indent=2)
 
-    l1_tune_rough = L1TuneRough(None, "DAC")
+    l1_tune_rough = L1TuneRough(None, "COPPER")
     
     case_total = l1_tune_rough.GetCaseTotalMax()
     count = 0
@@ -286,7 +288,7 @@ if __name__ == "__main__":
 if __name__ == "__main__":
     pp = pprint.PrettyPrinter(indent=2)
 
-    l1_tune = L1Tune(None)
+    l1_tune = L1Tune(None, "COPPER")
     l1_tune.mDebug = True
     case_total = l1_tune.GetCaseTotalMax()
     l1_tune.InitCaseBase(**Transceiver_Base_Default)
