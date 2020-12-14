@@ -33,8 +33,9 @@ print("Done.")
 # port1_location is to tune
 g_port1_location = "//neb-nickluong-01.calenglab.spirentcom.com/1/49"
 g_port2_location = "//neb-nickluong-01.calenglab.spirentcom.com/1/57"
-#g_port1_location = "//spt-n4u-110.calenglab.spirentcom.com/2/1"
-#g_port2_location = "//spt-n4u-110.calenglab.spirentcom.com/2/9"
+#g_port1_location = ""
+#g_port2_location = ""
+
 g_interface = "COPPER"
 g_resultdbid = ""
 g_iqserviceurl = ""
@@ -565,7 +566,11 @@ def SetupTuneEnv(**kwargs):
     g_interface = rxmode_port1
     if g_interface != 'COPPER' and g_interface!= 'FIBER':
         g_interface = 'FIBER'
-        
+    if g_stackcommand == False:
+        print("PhyMediaType: %s" %g_interface)
+    else:
+        stc.log("INFO", "L1AutoTune -PhyMediaType: %s" %g_interface)
+
     # Check lane count
     print("Get lane_count ...")
     g_lane_count = int(stc.get("%s.l1configgroup.l1porttxcvrs" % g_hport1, "lanecount"))
@@ -641,9 +646,9 @@ def DoTuneRough():
 
         if g_stackcommand == False:
             print("%3d : " %(counter)),
-            print(config_para),
+            print(json.dumps(config_para)),
         else:
-            info = "L1AutoTune - %3d : %s" %(counter, str(config_para))
+            info = "L1AutoTune - %3d : %s" %(counter, json.dumps(config_para))
             stc.log("INFO", info)
 
         ConfigToDevice(True, **config_para)
@@ -714,9 +719,9 @@ def DoTune(interface):
 
         if g_stackcommand == False:
             print("%3d : " %(counter)),
-            print(config_para['case']),
+            print(json.dumps(config_para['case'])),
         else:
-            info = "L1AutoTune - %3d : %s" %(counter, str(config_para['case']))
+            info = "L1AutoTune - %3d : %s" %(counter, json.dumps(config_para['case']))
             stc.log("INFO", info)
 
         ConfigToDevice(True, **config_para['case'])
@@ -785,9 +790,9 @@ def AutoTune(portSrc, portDst):
         return False
 
     if g_stackcommand == False:
-        print("Tune Rough Para: %s" %str(g_tune_rough_final))
+        print("Tune Rough Para: %s" %json.dumps(g_tune_rough_final))
     else:
-        stc.log("INFO", "L1AutoTune - Tune Rough Para: %s" %str(g_tune_rough_final))
+        stc.log("INFO", "L1AutoTune - Tune Rough Para: %s" %json.dumps(g_tune_rough_final))
 
     g_tune_final = DoTune(g_interface)
     ConfigToDevice(True, **g_tune_final)
@@ -799,10 +804,10 @@ def AutoTune(portSrc, portDst):
     g_errors_per_sec_dst, g_pre_fec_err_rate_dst = GetSymbolErrorsInfo(g_port2_name)
     if g_stackcommand == False:
         print("Final Src Pre-Fec Rate: %e (%d). Dst Pre-Fec Rate: %e (%d)." %(g_pre_fec_err_rate_src, g_errors_per_sec_src, g_pre_fec_err_rate_dst, g_errors_per_sec_dst))
-        print("Final Tranceiver Para: %s." %str(g_tune_final))
+        print("Final Tranceiver Para: %s." %json.dumps(g_tune_final))
     else:
         stc.log("INFO", "L1AutoTune - Final Src Pre-Fec Rate: %e (%d). Dst Pre-Fec Rate: %e (%d)." %(g_pre_fec_err_rate_src, g_errors_per_sec_src, g_pre_fec_err_rate_dst, g_errors_per_sec_dst))
-        stc.log("INFO", "L1AutoTune - Final Tranceiver Para: %s." %str(g_tune_final))
+        stc.log("INFO", "L1AutoTune - Final Tranceiver Para: %s." %json.dumps(g_tune_final))
     return True
 
 if __name__ == "__main__":
@@ -812,10 +817,10 @@ if __name__ == "__main__":
         print("Tune Rough Failed.")
         exit
     else:
-        print("Tune Rough Result: %s" %str(g_tune_rough_final))
+        print("Tune Rough Result: %s" %json.dumps(g_tune_rough_final))
 
     g_tune_final = DoTune(g_interface)
     ConfigToDevice(True, **g_tune_final)
     stc.perform("ResultsClearAllCommand")
-    print("Tune Result: %s", str(g_tune_final))
+    print("Tune Result: %s", json.dumps(g_tune_final))
 

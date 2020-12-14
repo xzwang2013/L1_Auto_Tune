@@ -16,6 +16,7 @@ import sys
 import os
 import json
 import pprint
+from collections import OrderedDict
 
 class L1Tune():
     '''
@@ -53,12 +54,12 @@ class L1Tune():
         path = os.path.dirname(os.path.abspath(__file__))
         
         with open(os.path.normpath(os.path.join(path, self.mTuneConfFileName)), 'r') as fid:
-            self.mTuneConfDict = json.load(fid)['Tune'][self.mInterface]
+            self.mTuneConfDict = json.load(fid, object_pairs_hook=OrderedDict)['Tune'][self.mInterface]
 
     def GetCaseTotalMax(self):
         result = 1
         for value in self.mTuneConfDict.values():
-            count = (value['range'][self.RangeIndexDef.end] - value['range'][self.RangeIndexDef.begin] + 1) / value['range'][self.RangeIndexDef.step]
+            count = (value['range'][self.RangeIndexDef.end] - value['range'][self.RangeIndexDef.begin] + 1) / value['range'][self.RangeIndexDef.step] + 1
             result *= count
 
         return result
@@ -198,7 +199,7 @@ class L1TuneRough():
         path = os.path.dirname(os.path.abspath(__file__))
         
         with open(os.path.normpath(os.path.join(path, self.mSearchConfFileName)), 'r') as fid:
-            configDict = json.load(fid)['TuneRough'][self.mInterface]
+            configDict = json.load(fid, object_pairs_hook=OrderedDict)['TuneRough'][self.mInterface]
             for k, v in configDict.items():
                 self.mSearchConfDict[k] = {}
                 self.mSearchConfDict[k]['range'] = self.__ExpandToList(v['range'])

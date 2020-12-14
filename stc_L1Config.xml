@@ -180,13 +180,13 @@
 
 	<stc:attribute internalIsEnum="false" internalType="bool" name="none" type="core.Sequenceable" value="true"/>
     <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.CommandCategory" value="L1Test"/>
-    <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.CommandDescription" value="L1 Transceiver Auto Tone Command"/>
+    <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.CommandDescription" value="L1 Transceiver Auto Tune Command"/>
 
     <stc:property name="PortSrc" type="handle" default="0" category="input"
                       displayName="Port Src" minOccurs="1" maxOccurs="1">
             <stc:attribute type="core.ValidHandleTypes" value="Project,Port" internalType="string"/>
             <stc:attribute type="framework.PropertyDescription"
-                         value="Port to do transceiver parameters auto tune."
+                         value="Source port to do transceiver parameters auto tune."
                          internalType="string"/>
     </stc:property>
     
@@ -194,7 +194,7 @@
                       displayName="Port Dst" minOccurs="1" maxOccurs="1">
             <stc:attribute type="core.ValidHandleTypes" value="Project,Port" internalType="string"/>
             <stc:attribute type="framework.PropertyDescription"
-                         value="Port to do transceiver parameters auto tune."
+                         value="Destination port to do transceiver parameters auto tune."
                          internalType="string"/>
     </stc:property>    
 </stc:class>
