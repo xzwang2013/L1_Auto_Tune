@@ -31,10 +31,10 @@ print("Done.")
 #########################################################################################
 
 # port1_location is to tune
-g_port1_location = "//neb-nickluong-01.calenglab.spirentcom.com/1/49"
-g_port2_location = "//neb-nickluong-01.calenglab.spirentcom.com/1/57"
-#g_port1_location = ""
-#g_port2_location = ""
+#g_port1_location = "//neb-nickluong-01.calenglab.spirentcom.com/1/49"
+#g_port2_location = "//neb-nickluong-01.calenglab.spirentcom.com/1/57"
+g_port1_location = ""
+g_port2_location = ""
 
 g_interface = "COPPER"
 g_resultdbid = ""
@@ -46,10 +46,12 @@ g_hport1 = None
 g_hport2 = None
 g_lane_count = 0
 g_stackcommand = False
+g_SaveEnhancedResultsSnapshot = False
 
 g_tune_rough_final = {}
 g_tune_final = {}
 
+g_tune_rough_max = 0
 #########################################################################################
 
 def Sleep(time_wait):
@@ -215,7 +217,7 @@ def VerifyLinkStatusUp():
 
     counter = 0
     while counter < 6:
-      Sleep(5)
+      Sleep(2)
       ret = GetLinkStatusResult()
       link_status = GetValueInResult("link_status", g_port1_name, **ret)
       if link_status != None :
@@ -485,9 +487,11 @@ def SetupTuneEnv(**kwargs):
     global g_hport2
     global g_lane_count
     global g_stackcommand
+    global g_SaveEnhancedResultsSnapshot
     global stc
     global g_port1_name
     global g_port2_name
+    global g_tune_rough_max
 
     if 'stackcommand' in kwargs.keys():
         if kwargs['stackcommand'] == True:
@@ -529,6 +533,16 @@ def SetupTuneEnv(**kwargs):
             print("Reserved ports: %s, location: %s." %(g_hport2, g_port2_location))
 
         config_result_profile(stc, None)
+
+    if 'saveEnhancedResultsSnapshot' in kwargs.keys():
+        g_SaveEnhancedResultsSnapshot = kwargs['saveEnhancedResultsSnapshot']
+    else:
+        g_SaveEnhancedResultsSnapshot = False
+    
+    if 'duration' in kwargs.keys():
+        g_tune_rough_max = kwargs['duration']
+    else:
+        g_tune_rough_max = 0
 
     # Get Port Name
     g_port1_name = stc.get(g_hport1, "name")
@@ -621,8 +635,10 @@ def SetupTuneEnv(**kwargs):
 def DoTuneRough():
     global g_interface
     global g_tune_rough_final
+    global g_tune_rough_max
 
-    l1_tune_rough = L1TuneRough(None, g_interface)
+    time_start = time.time()
+    l1_tune_rough = L1TuneRough(None, g_interface, g_tune_rough_max)
     case_total = l1_tune_rough.GetCaseTotalMax()
     if g_stackcommand == False:
         print("Tune Rough Case Max: %d." %(case_total))
@@ -634,6 +650,7 @@ def DoTuneRough():
     else:
         stc.log("INFO", "L1AutoTune - Begin Tune Rough ...")
 
+    tone_rough_succ = False
     counter = 0
     while True:
         config_para = l1_tune_rough.GetNextCase()
@@ -655,6 +672,9 @@ def DoTuneRough():
 
         result = VerifyLinkStatusUp()
         if result == False:
+            duration = time.time() - time_start
+            if duration > g_tune_rough_max * 60:
+                break
             counter += 1
             continue
         
@@ -669,10 +689,15 @@ def DoTuneRough():
                 print("Tune Rough Finished Successfully.")
             else:
                 stc.log("INFO", "L1AutoTune - Tune Rough Finished Successfully.")
+            tone_rough_succ = True    
             break
         
-        SaveEnhancedResultsSnapshot(**config_para)
+        if g_SaveEnhancedResultsSnapshot == True:
+            SaveEnhancedResultsSnapshot(**config_para)
         counter += 1
+
+    if (tone_rough_succ == False):
+        return None
 
     g_tune_rough_final = config_para.copy()
     return config_para
@@ -736,12 +761,14 @@ def DoTune(interface):
                     print("Tune Finished, zero CW error.")
                 else:
                     stc.log("INFO", "L1AutoTune - Tune Finished, zero CW error.")
-                SaveEnhancedResultsSnapshot(**config_para)
+                if g_SaveEnhancedResultsSnapshot == True:    
+                    SaveEnhancedResultsSnapshot(**config_para)
                 break
             else:
                 l1_tune.CaseFeedback(result)
 
-        SaveEnhancedResultsSnapshot(**config_para['case'])
+        if g_SaveEnhancedResultsSnapshot == True:
+            SaveEnhancedResultsSnapshot(**config_para['case'])
         counter += 1
 
     g_tune_rough_final = l1_tune.GetFinalResult().copy()
@@ -756,10 +783,14 @@ def Reset():
     global g_hport1
     global g_hport2
     global g_lane_count
+    global g_SaveEnhancedResultsSnapshot
+    global g_tune_rough_max
 
     g_interface = "COPPER"
     g_resultdbid = ""
     g_iqserviceurl = ""
+    g_SaveEnhancedResultsSnapshot = False
+    g_tune_rough_max = 0
 
     g_hport1 = None
     g_hport2 = None
@@ -768,7 +799,7 @@ def Reset():
     g_tune_rough_final = {}
     g_tune_final = {}
 
-def AutoTune(portSrc, portDst):
+def AutoTune(portSrc, portDst, duration, UptimizeAfterLinkup, saveEnhancedResultsSnapshot):
     global g_tune_rough_final
     global g_tune_final
     global g_errors_per_sec_src
@@ -777,7 +808,7 @@ def AutoTune(portSrc, portDst):
     global g_pre_fec_err_rate_dst
     global g_interface
 
-    result = SetupTuneEnv(port1 = portSrc, port2 = portDst, stackcommand = True)
+    result = SetupTuneEnv(port1 = portSrc, port2 = portDst, stackcommand = True, duration = duration, saveEnhancedResultsSnapshot = saveEnhancedResultsSnapshot)
     if result == False:
         if g_stackcommand == False:
             print("Setup tune env fail.")
@@ -787,6 +818,10 @@ def AutoTune(portSrc, portDst):
 
     g_tune_rough_final = DoTuneRough()
     if g_tune_rough_final == None:
+        if g_stackcommand == False:
+            print("Tune Rough fail, link can't come up.")
+        else:
+            stc.log("INFO", "L1AutoTune - Tune Rough fail, link can't come up.")
         return False
 
     if g_stackcommand == False:
@@ -794,24 +829,26 @@ def AutoTune(portSrc, portDst):
     else:
         stc.log("INFO", "L1AutoTune - Tune Rough Para: %s" %json.dumps(g_tune_rough_final))
 
-    g_tune_final = DoTune(g_interface)
-    ConfigToDevice(True, **g_tune_final)
-    RefreshTransceiverParaOnGui()
-    stc.perform("ResultsClearAllCommand")
+    if (UptimizeAfterLinkup == True):
+        g_tune_final = DoTune(g_interface)
+        ConfigToDevice(True, **g_tune_final)
+        RefreshTransceiverParaOnGui()
+        stc.perform("ResultsClearAllCommand")
 
-    Sleep(10)
-    g_errors_per_sec_src, g_pre_fec_err_rate_src = GetSymbolErrorsInfo(g_port1_name)
-    g_errors_per_sec_dst, g_pre_fec_err_rate_dst = GetSymbolErrorsInfo(g_port2_name)
-    if g_stackcommand == False:
-        print("Final Src Pre-Fec Rate: %e (%d). Dst Pre-Fec Rate: %e (%d)." %(g_pre_fec_err_rate_src, g_errors_per_sec_src, g_pre_fec_err_rate_dst, g_errors_per_sec_dst))
-        print("Final Tranceiver Para: %s." %json.dumps(g_tune_final))
-    else:
-        stc.log("INFO", "L1AutoTune - Final Src Pre-Fec Rate: %e (%d). Dst Pre-Fec Rate: %e (%d)." %(g_pre_fec_err_rate_src, g_errors_per_sec_src, g_pre_fec_err_rate_dst, g_errors_per_sec_dst))
-        stc.log("INFO", "L1AutoTune - Final Tranceiver Para: %s." %json.dumps(g_tune_final))
+        Sleep(10)
+        g_errors_per_sec_src, g_pre_fec_err_rate_src = GetSymbolErrorsInfo(g_port1_name)
+        g_errors_per_sec_dst, g_pre_fec_err_rate_dst = GetSymbolErrorsInfo(g_port2_name)
+        if g_stackcommand == False:
+            print("Final Src Pre-Fec Rate: %e (%d). Dst Pre-Fec Rate: %e (%d)." %(g_pre_fec_err_rate_src, g_errors_per_sec_src, g_pre_fec_err_rate_dst, g_errors_per_sec_dst))
+            print("Final Tranceiver Para: %s." %json.dumps(g_tune_final))
+        else:
+            stc.log("INFO", "L1AutoTune - Final Src Pre-Fec Rate: %e (%d). Dst Pre-Fec Rate: %e (%d)." %(g_pre_fec_err_rate_src, g_errors_per_sec_src, g_pre_fec_err_rate_dst, g_errors_per_sec_dst))
+            stc.log("INFO", "L1AutoTune - Final Tranceiver Para: %s." %json.dumps(g_tune_final))
+            
     return True
 
 if __name__ == "__main__":
-    SetupTuneEnv(port1 = g_port1_location, port2 = g_port2_location, rxmode = "COPPER")
+    SetupTuneEnv(port1 = g_port1_location, port2 = g_port2_location, rxmode = "COPPER", duration = 0, saveEnhancedResultsSnapshot = False)
     g_tune_rough_final = DoTuneRough()
     if g_tune_rough_final == None:
         print("Tune Rough Failed.")

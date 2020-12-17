@@ -197,6 +197,18 @@
                          value="Destination port to do transceiver parameters auto tune."
                          internalType="string"/>
     </stc:property>    
+
+    <stc:property category="input" name="Duration" displayName="Tune Rough Duration(min)" type="u32" default="10" minOccurs="1" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Tune Rough duration limit. 0 means no limit."/>
+    </stc:property>
+
+    <stc:property category="input" name="UptimizeAfterLinkup" displayName="Uptimize Line After Linkup" type="bool" default="TRUE" minOccurs="1" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Whether to uptimize line quality after link up."/>
+    </stc:property>
+
+    <stc:property category="input" name="SaveEnhancedResultsSnapshot" displayName="Save Enhanced Results Snapshot" type="bool" default="TRUE" minOccurs="1" maxOccurs="1">
+        <stc:attribute internalIsEnum="false" internalType="string" name="none" type="framework.PropertyDescription" value="Whether to save enhanced results snapshot"/>
+    </stc:property>
 </stc:class>
 
 </stc:meta>

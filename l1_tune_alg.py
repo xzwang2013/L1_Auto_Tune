@@ -183,7 +183,7 @@ class L1TuneRough():
         end = 1
         step = 2
 
-    def __init__(self, file_name, interface):
+    def __init__(self, file_name, interface, tune_rough_max):
         self.mFinshed = False
         self.mCurConf = {}
         self.mSearchConfDict = {}
@@ -192,6 +192,7 @@ class L1TuneRough():
         self.mQuality = {}
         if (file_name != None and len(file_name) > 0):
             self.mSearchConfFileName = file_name
+        self.mTuneRoughMax = tune_rough_max
 
         self.load()    
 
@@ -205,7 +206,34 @@ class L1TuneRough():
                 self.mSearchConfDict[k]['range'] = self.__ExpandToList(v['range'])
                 #Append cunrent index
                 self.mSearchConfDict[k]['index'] = 0
+                self.mSearchConfDict[k]['step_max'] = 0
                 self.mCurConf[k] = self.mSearchConfDict[k]['range'][0]
+        self.__UpdateStepMax()        
+
+    def __GetCaseTotalMax(self):
+        result = 1
+        effective_para_count = 0
+        for value in self.mSearchConfDict.values():
+            result *= len(value['range'])
+            if len(value['range']) > 1:
+                effective_para_count += 1
+
+        return result, effective_para_count
+
+    def __UpdateStepMax(self):
+        if (self.mTuneRoughMax == 0):
+            mutiple = 1
+        else:
+            total_max, effective_para_count = self.__GetCaseTotalMax()
+            mutiple = round(float(total_max) / self.mTuneRoughMax) ** (float(1)/effective_para_count)
+            if mutiple < 1:
+                mutiple = 1
+
+        for value in self.mSearchConfDict.values():
+            step_max = round(len(value['range']) / mutiple)
+            if (step_max == 0):
+                step_max = 1
+            value['step_max'] = int(step_max)
 
     def __ExpandToList(self, v):
         ret = []
@@ -237,7 +265,7 @@ class L1TuneRough():
     def GetCaseTotalMax(self):
         result = 1
         for value in self.mSearchConfDict.values():
-            result *= len(value['range'])
+            result *= value['step_max']
 
         return result
 
@@ -251,7 +279,7 @@ class L1TuneRough():
         for k, v in self.mSearchConfDict.items():
             if to_move == True:
                 v['index'] += 1
-                if (v['index'] >= len(v['range'])):
+                if (v['index'] >= v['step_max'] or v['index'] >= len(v['range'])):
                     v['index'] = 0
                     to_move = True
                 else:
@@ -264,12 +292,12 @@ class L1TuneRough():
 
         return ret
 
-'''
+
 # Test Auto Tune Rough
 if __name__ == "__main__":
     pp = pprint.PrettyPrinter(indent=2)
 
-    l1_tune_rough = L1TuneRough(None, "COPPER")
+    l1_tune_rough = L1TuneRough(None, "COPPER", 25)
     
     case_total = l1_tune_rough.GetCaseTotalMax()
     count = 0
@@ -282,9 +310,8 @@ if __name__ == "__main__":
         count += 1
 
     sys.exit(0)
+
 '''
-
-
 # Test Auto Tone
 if __name__ == "__main__":
     pp = pprint.PrettyPrinter(indent=2)
@@ -313,3 +340,4 @@ if __name__ == "__main__":
         l1_tune.CaseFeedback(offset)
 
     sys.exit(0)
+'''
