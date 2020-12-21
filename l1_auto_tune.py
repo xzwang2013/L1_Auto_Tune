@@ -799,7 +799,7 @@ def Reset():
     g_tune_rough_final = {}
     g_tune_final = {}
 
-def AutoTune(portSrc, portDst, duration, UptimizeAfterLinkup, saveEnhancedResultsSnapshot):
+def AutoTune(portSrc, portDst, duration, optimizeAfterLinkup, saveEnhancedResultsSnapshot):
     global g_tune_rough_final
     global g_tune_final
     global g_errors_per_sec_src
@@ -829,7 +829,7 @@ def AutoTune(portSrc, portDst, duration, UptimizeAfterLinkup, saveEnhancedResult
     else:
         stc.log("INFO", "L1AutoTune - Tune Rough Para: %s" %json.dumps(g_tune_rough_final))
 
-    if (UptimizeAfterLinkup == True):
+    if (optimizeAfterLinkup == True):
         g_tune_final = DoTune(g_interface)
         ConfigToDevice(True, **g_tune_final)
         RefreshTransceiverParaOnGui()

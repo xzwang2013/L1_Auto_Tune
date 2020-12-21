@@ -15,7 +15,7 @@
 from StcPython import StcPython
 from l1_auto_tune import AutoTune, Reset
 
-def validate(PortSrc, PortDst, Duration, UptimizeAfterLinkup, SaveEnhancedResultsSnapshot):
+def validate(PortSrc, PortDst, Duration, OptimizeAfterLinkup, SaveEnhancedResultsSnapshot):
     if PortSrc == "":
         return "L1AutoTune - PortSrc can't be empty" 
     elif PortDst == "":
@@ -23,8 +23,8 @@ def validate(PortSrc, PortDst, Duration, UptimizeAfterLinkup, SaveEnhancedResult
 
     return ''
 
-def run(PortSrc, PortDst, Duration, UptimizeAfterLinkup, SaveEnhancedResultsSnapshot):
-    return AutoTune(PortSrc, PortDst, Duration, UptimizeAfterLinkup, SaveEnhancedResultsSnapshot)
+def run(PortSrc, PortDst, Duration, OptimizeAfterLinkup, SaveEnhancedResultsSnapshot):
+    return AutoTune(PortSrc, PortDst, Duration, OptimizeAfterLinkup, SaveEnhancedResultsSnapshot)
 
 def reset():
     Reset()
