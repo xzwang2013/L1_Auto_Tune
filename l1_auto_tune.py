@@ -31,10 +31,10 @@ print("Done.")
 #########################################################################################
 
 # port1_location is to tune
-#g_port1_location = "//neb-nickluong-01.calenglab.spirentcom.com/1/49"
-#g_port2_location = "//neb-nickluong-01.calenglab.spirentcom.com/1/57"
-g_port1_location = ""
-g_port2_location = ""
+g_port1_location = "//neb-nickluong-01.calenglab.spirentcom.com/1/1"
+g_port2_location = "//neb-nickluong-01.calenglab.spirentcom.com/1/2"
+#g_port1_location = ""
+#g_port2_location = ""
 
 g_interface = "COPPER"
 g_resultdbid = ""
@@ -600,15 +600,19 @@ def SetupTuneEnv(**kwargs):
 
     print("lane_count: %d" %(g_lane_count))
 
-    # Disable AN
     if g_stackcommand == False:
-        print("Disable AN, set all lane's pattern to None ... "),
+        print("Disable AN, enable LR, set all lane's pattern to None ... "),
         sys.stdout.flush()
     else:
-        stc.log("INFO", "L1AutoTune - Disable AN, set all lane's pattern to None ... ")
+        stc.log("INFO", "L1AutoTune - Disable AN, enable LR, set all lane's pattern to None ... ")
 
+    # Disable AN
     stc.config("%s.l1configgroup.l1portpcs" %g_hport1, AutoNegotiationEnabled="False")
     stc.config("%s.l1configgroup.l1portpcs" %g_hport2, AutoNegotiationEnabled="False")
+
+    # Enable LR
+    stc.config("%s.l1configgroup.l1portpcs" %g_hport1, LinkTrainingEnabled="True")
+    stc.config("%s.l1configgroup.l1portpcs" %g_hport2, LinkTrainingEnabled="True")
 
     # Config None Pattern
     i = 1
@@ -673,7 +677,7 @@ def DoTuneRough():
         result = VerifyLinkStatusUp()
         if result == False:
             duration = time.time() - time_start
-            if duration > g_tune_rough_max * 60:
+            if g_tune_rough_max > 0 and duration > g_tune_rough_max * 60:
                 break
             counter += 1
             continue
@@ -697,6 +701,7 @@ def DoTuneRough():
         counter += 1
 
     if (tone_rough_succ == False):
+        ConfigToDevice(True, **(l1_tune_rough.GetDefaultCase()))
         return None
 
     g_tune_rough_final = config_para.copy()
@@ -718,6 +723,10 @@ def DoTune(interface):
     else:
         stc.log("INFO", "L1AutoTune - Current Src Pre-Fec Rate: %e (%d). Dst Pre-Fec Rate: %e (%d)." %(g_pre_fec_err_rate_src, g_errors_per_sec_src, g_pre_fec_err_rate_dst, g_errors_per_sec_dst))
     l1_tune = L1Tune(None, interface)
+
+    if g_errors_per_sec_dst == 0:
+        #Need not tune more
+        return None
 
     case_total = l1_tune.GetCaseTotalMax()
     if g_stackcommand == False:
@@ -757,12 +766,13 @@ def DoTune(interface):
         else:
             result = CheckLineQualityForTune(config_para['resultcheck'])
             if result == 65535:
+                l1_tune.CaseFeedback(1)
                 if g_stackcommand == False:
                     print("Tune Finished, zero CW error.")
                 else:
                     stc.log("INFO", "L1AutoTune - Tune Finished, zero CW error.")
                 if g_SaveEnhancedResultsSnapshot == True:    
-                    SaveEnhancedResultsSnapshot(**config_para)
+                    SaveEnhancedResultsSnapshot(**config_para['case'])
                 break
             else:
                 l1_tune.CaseFeedback(result)
@@ -820,8 +830,10 @@ def AutoTune(portSrc, portDst, duration, optimizeAfterLinkup, saveEnhancedResult
     if g_tune_rough_final == None:
         if g_stackcommand == False:
             print("Tune Rough fail, link can't come up.")
+            print("L1 Auto Tune command failed to bring up the link, emphasis values are reset to default. Please check if there is other factors other than emphasis values which may result link error.")
         else:
             stc.log("INFO", "L1AutoTune - Tune Rough fail, link can't come up.")
+            stc.log("WARN", "L1AutoTune - L1 Auto Tune command failed to bring up the link, emphasis values are reset to default. Please check if there is other factors other than emphasis values which may result link error.")
         return False
 
     if g_stackcommand == False:
@@ -831,11 +843,14 @@ def AutoTune(portSrc, portDst, duration, optimizeAfterLinkup, saveEnhancedResult
 
     if (optimizeAfterLinkup == True):
         g_tune_final = DoTune(g_interface)
-        ConfigToDevice(True, **g_tune_final)
-        RefreshTransceiverParaOnGui()
-        stc.perform("ResultsClearAllCommand")
+        if (g_tune_final != None):
+            ConfigToDevice(True, **g_tune_final)
+            RefreshTransceiverParaOnGui()
+            stc.perform("ResultsClearAllCommand")
+            Sleep(10)
+        else:
+            g_tune_final = g_tune_rough_final
 
-        Sleep(10)
         g_errors_per_sec_src, g_pre_fec_err_rate_src = GetSymbolErrorsInfo(g_port1_name)
         g_errors_per_sec_dst, g_pre_fec_err_rate_dst = GetSymbolErrorsInfo(g_port2_name)
         if g_stackcommand == False:
@@ -848,7 +863,7 @@ def AutoTune(portSrc, portDst, duration, optimizeAfterLinkup, saveEnhancedResult
     return True
 
 if __name__ == "__main__":
-    SetupTuneEnv(port1 = g_port1_location, port2 = g_port2_location, rxmode = "COPPER", duration = 0, saveEnhancedResultsSnapshot = False)
+    SetupTuneEnv(port1 = g_port1_location, port2 = g_port2_location, rxmode = "COPPER", duration = 0, saveEnhancedResultsSnapshot = True)
     g_tune_rough_final = DoTuneRough()
     if g_tune_rough_final == None:
         print("Tune Rough Failed.")

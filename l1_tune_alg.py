@@ -204,6 +204,7 @@ class L1TuneRough():
             for k, v in configDict.items():
                 self.mSearchConfDict[k] = {}
                 self.mSearchConfDict[k]['range'] = self.__ExpandToList(v['range'])
+                self.mSearchConfDict[k]['default'] = v['default']
                 #Append cunrent index
                 self.mSearchConfDict[k]['index'] = 0
                 self.mSearchConfDict[k]['step_max'] = 0
@@ -292,6 +293,13 @@ class L1TuneRough():
 
         return ret
 
+    # API
+    def GetDefaultCase(self):
+        ret = {}
+        for k, v in self.mSearchConfDict.items():
+            ret[k] = v['default'][0]
+
+        return ret
 
 # Test Auto Tune Rough
 if __name__ == "__main__":
@@ -300,6 +308,9 @@ if __name__ == "__main__":
     l1_tune_rough = L1TuneRough(None, "COPPER", 25)
     
     case_total = l1_tune_rough.GetCaseTotalMax()
+
+    config = l1_tune_rough.GetDefaultCase()
+
     count = 0
     while True:
         config = l1_tune_rough.GetNextCase()

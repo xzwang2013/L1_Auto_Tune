@@ -50,37 +50,46 @@
     "TuneRough" : {
         "COPPER" : {
             "preEmphasis" : {
-                "range" : [-6, 0, 2]
-                
+                "range" : [-4, 0, 2],
+                "default" : [-2]
             },
             "mainTap" : {
-                "range" : [8, 20, 2]
+                "range" : [10, 18, 4],
+                "default" : [11]
             },
             "postEmphasis" : {
-                "range" : [-6, 0, 2]
+                "range" : [-4, 0, 2],
+                "default" : [0]
             },
             "txCoarseSwing" : {
-                "range" : [4, 4, 2]
+                "range" : [4, 4, 2],
+                "default" : [4]
             },
             "ctle" : {
-                "range" : [16, 16, 2]
+                "range" : [16, 16, 2],
+                "default" : [16]
             }
         },
         "FIBER" : {
+            "ctle" : {
+                "range" : [0, 16, 8],
+                "default" : [16]
+            },
             "preEmphasis" : {
-                "range" : [-4, 0, 2]
+                "range" : [-2, 0, 2],
+                "default" : [0]
             },
             "mainTap" : {
-                "range" : [8, 20, 2]
+                "range" : [14, 18, 4],
+                "default" : [18]
             },
             "postEmphasis" : {
-                "range" : [-4, 0, 2]
+                "range" : [-2, 0, 2],
+                "default" : [0]
             },
             "txCoarseSwing" : {
-                "range" : [4, 4, 2]
-            },
-            "ctle" : {
-                "range" : [0, 32, 8]
+                "range" : [4, 4, 2],
+                "default" : [4]
             }
         }
     }
