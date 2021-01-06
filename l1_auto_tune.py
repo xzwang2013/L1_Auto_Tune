@@ -660,10 +660,10 @@ def DoTuneRough():
         config_para = l1_tune_rough.GetNextCase()
         if config_para == None:
             if g_stackcommand == False:
-                print("Tune Rough finished. Fail.")
+                print("Tune Rough finished, fail.")
             else:
                 stc.log("INFO", "L1AutoTune - Tune Rough finished, fail.")
-            return None
+            break
 
         if g_stackcommand == False:
             print("%3d : " %(counter)),
@@ -701,7 +701,14 @@ def DoTuneRough():
         counter += 1
 
     if (tone_rough_succ == False):
+        default_value = l1_tune_rough.GetDefaultCase()
+        if g_stackcommand == False:
+            print("default : %s" %(json.dumps(default_value)))
+        else:
+            info = "L1AutoTune - default : %s" %(json.dumps(default_value))
+            stc.log("INFO", info)
         ConfigToDevice(True, **(l1_tune_rough.GetDefaultCase()))
+        RefreshTransceiverParaOnGui()
         return None
 
     g_tune_rough_final = config_para.copy()
